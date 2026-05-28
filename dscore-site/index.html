@@ -136,6 +136,7 @@ var filterPos='ALL', filterTeam='ALL', sortCol='adj_dscore', sortAsc=false;
 
 function sc(s){return s>=75?'e':s>=55?'g':'a'}
 function wc(w){return w>0?'p':w<0?'n':'z'}
+function isCatcher(){return filterPos==='C';}
 
 function makeHs(url,cls,init){
   var wrap=document.createElement('span');
@@ -176,10 +177,13 @@ function getFilteredPlayers(){
   if(filterTeam!=='ALL'){
     list=list.filter(function(p){return p.team===filterTeam;});
   }
+  // For BLK (passed balls), lower is better — invert sort default
+  var invertSort=(sortCol==='pb');
   list=list.slice().sort(function(a,b){
     var va=+(a[sortCol])||0, vb=+(b[sortCol])||0;
     if(va===vb) return (b.adj_dscore||0)-(a.adj_dscore||0);
-    return sortAsc ? (va-vb) : (vb-va);
+    var asc=invertSort ? !sortAsc : sortAsc;
+    return asc ? (va-vb) : (vb-va);
   });
   return list;
 }
@@ -224,7 +228,9 @@ function renderFilters(teams){
 
 function renderTable(players){
   var showPos=filterPos==='ALL';
+  var isC=isCatcher();
   var hasDRS=players.some(function(p){return p.drs!==0;});
+  var hasFRV=players.some(function(p){return p.frv&&p.frv!==0;});
 
   if(!players.length){
     return '<div class="twrap"><div class="empty">No players match the current filters.</div></div>';
@@ -233,47 +239,74 @@ function renderTable(players){
   var rows=players.map(function(p,i){
     var init=(p.player.split(',')[0]||'?').charAt(0).toUpperCase();
     var hs=makeHs(p.headshot,'hs',init);
-    var oaa=(p.oaa>=0?'+':'')+p.oaa;
-    var drs=p.drs===0?'—':(p.drs>=0?'+':'')+p.drs;
     var dwar=(p.dwar>=0?'+':'')+p.dwar;
     var pct=Math.round(Math.min(p.adj_dscore/99,1)*100);
-    var oaaCls='tr oaa'+(sortCol==='oaa'?' sorted-col':'');
-    var drsCls='tr'+(p.drs===0?' z':'')+(sortCol==='drs'?' sorted-col':'');
     var dwarCls='tdw '+wc(p.dwar);
-    return '<tr class="'+(i===0?'r1':'')+'" onclick="location=\'player.html?pos='+p.position+'&rank='+p.rank+'\'">'
+    var row='<tr class="'+(i===0?'r1':'')+'" onclick="location=\'player.html?pos='+p.position+'&rank='+p.rank+'\'">'
       +'<td class="rnk '+(i===0?'g':'')+'">'+(i===0?'#1':'#'+(i+1))+'</td>'
       +'<td><div class="tplayer">'+hs+'<div><div class="pn">'+p.player+'</div>'
       +'<div class="pt">'+p.team+(showPos?' · '+p.position:'')+'</div></div></div></td>'
-      +(showPos?'<td class="tpos">'+p.position+'</td>':'')
-      +'<td class="'+oaaCls+'">'+oaa+'</td>'
-      +'<td class="'+drsCls+'">'+drs+'</td>'
-      +'<td class="'+dwarCls+'">'+dwar+'</td>'
-      +'<td class="tds"><span class="dsn '+sc(p.adj_dscore)+'">'+p.adj_dscore+'</span></td>'
-      +'<td class="btd"><div class="bt"><div class="bf" style="width:'+pct+'%"></div></div></td>'
-      +'</tr>';
+      +(showPos?'<td class="tpos">'+p.position+'</td>':'');
+    if(isC){
+      // Catcher-specific columns: FRV, ARM (CS%), BLK (PB)
+      var frv=p.frv===0?'—':(p.frv>=0?'+':'')+p.frv.toFixed(1);
+      var arm=p.cs_pct>0?p.cs_pct.toFixed(0)+'%':'—';
+      var blk=p.pb!==undefined?p.pb:'—';
+      var frvCls='tr oaa'+(sortCol==='frv'?' sorted-col':'');
+      var armCls='tr'+(p.cs_pct===0?' z':'')+(sortCol==='cs_pct'?' sorted-col':'');
+      var blkCls='tr'+(p.pb===0?' z':'')+(sortCol==='pb'?' sorted-col':'');
+      row+=('<td class="'+frvCls+'">'+frv+'</td>'
+           +'<td class="'+armCls+'">'+arm+'</td>'
+           +'<td class="'+blkCls+'">'+blk+'</td>');
+    } else {
+      var oaa=(p.oaa>=0?'+':'')+p.oaa;
+      var drs=p.drs===0?'—':(p.drs>=0?'+':'')+p.drs;
+      var oaaCls='tr oaa'+(sortCol==='oaa'?' sorted-col':'');
+      var drsCls='tr'+(p.drs===0?' z':'')+(sortCol==='drs'?' sorted-col':'');
+      row+=('<td class="'+oaaCls+'">'+oaa+'</td>'
+           +'<td class="'+drsCls+'">'+drs+'</td>');
+    }
+    row+=('<td class="'+dwarCls+'">'+dwar+'</td>'
+         +'<td class="tds"><span class="dsn '+sc(p.adj_dscore)+'">'+p.adj_dscore+'</span></td>'
+         +'<td class="btd"><div class="bt"><div class="bf" style="width:'+pct+'%"></div></div></td>'
+         +'</tr>');
+    return row;
   }).join('');
 
   var titleText=filterPos==='ALL'?'All Positions':PL[filterPos]||filterPos;
   var teamText=filterTeam==='ALL'?'':' · '+filterTeam;
-  var sortLabel={adj_dscore:'D-Score',oaa:'OAA',drs:'DRS',dwar:'D-WAR'}[sortCol]||sortCol;
+  var sortLabelMap={adj_dscore:'D-Score',oaa:'OAA',drs:'DRS',dwar:'D-WAR',frv:'FRV',cs_pct:'CS%',pb:'PB'};
+  var sortLabel=sortLabelMap[sortCol]||sortCol;
+
+  // Catcher badge: show which components are available
+  var catcherNote='';
+  if(isC){
+    catcherNote='<span style="font-family:var(--mono);font-size:10px;color:var(--accent);background:rgba(200,240,96,0.08);border:1px solid rgba(200,240,96,0.18);padding:4px 10px;border-radius:2px">'
+      +(hasFRV?'● FRV + ARM + BLK + DRS':'◐ ARM + BLK + DRS · Framing pending')+'</span>';
+  }
 
   return '<div class="twrap">'
     +'<div class="thead-row"><div>'
     +'<div class="ttitle">'+titleText+teamText+'</div>'
     +'<div class="tmeta">'+players.length+' players · sorted by '+sortLabel+(sortAsc?' ▲':' ▼')+' · The Cutoff D-Score</div>'
     +'</div>'
-    +(!hasDRS?'<span class="warn-tag">DRS pending early season</span>':'')
+    +(isC?catcherNote:(!hasDRS?'<span class="warn-tag">DRS pending early season</span>':''))
     +'</div>'
     +'<table><thead><tr>'
     +'<th>#</th><th>Player</th>'
     +(showPos?'<th class="r">POS</th>':'')
-    +sortTh('oaa','OAA')
-    +sortTh('drs','DRS')
+    +(isC
+      ? sortTh('frv','FRV')+sortTh('cs_pct','ARM')+sortTh('pb','BLK')
+      : sortTh('oaa','OAA')+sortTh('drs','DRS'))
     +sortTh('dwar','D-WAR')
     +sortTh('adj_dscore','D-SCORE')
     +'<th></th>'
     +'</tr></thead>'
-    +'<tbody>'+rows+'</tbody></table></div>';
+    +'<tbody>'+rows+'</tbody></table>'
+    +(isC?'<div style="font-family:var(--mono);font-size:9px;color:var(--muted);padding:12px 0 4px;line-height:1.8">'
+      +'FRV = Framing Runs Value (Baseball Savant) · ARM = Caught Stealing % (vs avg) · BLK = Passed Balls (lower is better) · Formula: FRV 40% + DRS 25% + ARM 20% + BLK 15%'
+      +'</div>':'')
+    +'</div>';
 }
 
 function render(){

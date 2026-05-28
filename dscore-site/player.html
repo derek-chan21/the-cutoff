@@ -75,12 +75,18 @@
   .metric-card.drs::before  { background:var(--warn); }
   .metric-card.frv::before  { background:var(--accent); }
   .metric-card.raw::before  { background:var(--accent); }
+  .metric-card.arm::before  { background:var(--accent2); }
+  .metric-card.blk::before  { background:#b060f0; }
+  .metric-card.catcher-drs::before { background:var(--warn); }
   .metric-tag { font-family:var(--mono); font-size:10px; letter-spacing:.1em; color:var(--muted); margin-bottom:8px; }
   .metric-val { font-family:var(--display); font-size:40px; line-height:1; margin-bottom:6px; }
   .metric-card.oaa .metric-val { color:var(--accent2); }
   .metric-card.drs .metric-val { color:var(--warn); }
   .metric-card.frv .metric-val { color:var(--accent); }
   .metric-card.raw .metric-val { color:var(--accent); }
+  .metric-card.arm .metric-val { color:var(--accent2); }
+  .metric-card.blk .metric-val { color:#b060f0; }
+  .metric-card.catcher-drs .metric-val { color:var(--warn); }
   .metric-desc { font-size:12px; color:var(--muted); line-height:1.5; }
   .metric-bar { height:3px; background:rgba(255,255,255,0.06); border-radius:2px; margin-top:12px; overflow:hidden; }
   .metric-bar-fill { height:100%; border-radius:2px; }
@@ -88,6 +94,23 @@
   .drs .metric-bar-fill { background:var(--warn); }
   .frv .metric-bar-fill { background:var(--accent); }
   .raw .metric-bar-fill { background:var(--accent); }
+  .arm .metric-bar-fill { background:var(--accent2); }
+  .blk .metric-bar-fill { background:#b060f0; }
+  .catcher-drs .metric-bar-fill { background:var(--warn); }
+  /* Catcher formula breakdown */
+  .c-breakdown { background:var(--surface); border:1px solid var(--border); border-radius:6px; overflow:hidden; }
+  .c-breakdown-title { font-family:var(--mono); font-size:10px; letter-spacing:.12em; color:var(--muted); padding:14px 20px 10px; border-bottom:1px solid var(--border); }
+  .c-comp { display:flex; align-items:center; gap:14px; padding:14px 20px; border-bottom:1px solid var(--border); }
+  .c-comp:last-child { border-bottom:none; }
+  .c-comp-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .c-comp-info { flex:1; }
+  .c-comp-name { font-size:13px; font-weight:500; }
+  .c-comp-desc { font-family:var(--mono); font-size:10px; color:var(--muted); margin-top:2px; }
+  .c-comp-right { text-align:right; flex-shrink:0; }
+  .c-comp-val { font-family:var(--display); font-size:22px; line-height:1; }
+  .c-comp-wt { font-family:var(--mono); font-size:10px; color:var(--muted); margin-top:2px; }
+  .c-comp-bar { height:3px; background:rgba(255,255,255,0.06); border-radius:2px; margin-top:8px; overflow:hidden; }
+  .c-comp-bar-fill { height:100%; border-radius:2px; }
   .pending-badge {
     font-family:var(--mono); font-size:10px; color:var(--warn);
     background:rgba(240,160,96,0.08); border:1px solid rgba(240,160,96,0.2);
@@ -259,21 +282,86 @@ function disagreementAnalysis(player) {
   }
 }
 
+function renderCatcherBreakdown(player, pctile) {
+  const frv = player.frv || 0;
+  const csPct = player.cs_pct || 0;
+  const pb = player.pb !== undefined ? player.pb : null;
+  const sb = player.sb !== undefined ? player.sb : null;
+  const cs = player.cs !== undefined ? player.cs : null;
+  const drs = player.drs;
+  const hasDRS = drs !== 0;
+  const hasFRV = frv !== 0;
+  const hasArm = csPct > 0;
+
+  const frvNorm = player.frv_norm || 50;
+  const armNorm = player.arm_norm || 50;
+  const blockNorm = player.block_norm || 50;
+
+  const components = [
+    {
+      cls:'frv', dot:'var(--accent)', name:'Framing (FRV)',
+      wt:'40% weight', val: hasFRV ? (frv>=0?'+':'')+frv.toFixed(1)+' FRV' : 'Pending',
+      norm: frvNorm,
+      desc: hasFRV
+        ? 'Framing Runs Value from Baseball Savant. Elite framers steal 10–20+ strikes per season.'
+        : 'Framing data not yet available for this season. Will auto-populate when published.'
+    },
+    {
+      cls:'arm', dot:'var(--accent2)', name:'Arm / Throwing',
+      wt:'20% weight', val: hasArm ? csPct.toFixed(0)+'% CS rate' : '—',
+      norm: armNorm,
+      desc: hasArm
+        ? `Caught stealing ${cs !== null ? cs+' of '+(cs+(sb||0)) : ''} baserunners. League avg ~25–28%. Elite catchers exceed 35%.`
+        : 'Throwing data not yet available. CS% will be populated from Baseball Reference.'
+    },
+    {
+      cls:'blk', dot:'#b060f0', name:'Blocking',
+      wt:'15% weight', val: pb !== null ? pb+' PB' : '—',
+      norm: blockNorm,
+      desc: pb !== null
+        ? `${pb} passed ball${pb!==1?'s':''} allowed this season. Blocking score is inverted — fewer passed balls = higher score.`
+        : 'Blocking data pending from Baseball Reference.'
+    },
+    {
+      cls:'catcher-drs', dot:'var(--warn)', name:'DRS — Defensive Runs Saved',
+      wt:'25% weight', val: hasDRS ? (drs>=0?'+':'')+drs+' DRS' : 'Pending',
+      norm: player.arm_norm ? 50 : 50, // DRS norm isn't stored separately, show bar via pctile
+      desc: hasDRS
+        ? 'Baseball Reference overall defensive runs saved. Includes framing, blocking, and throwing components.'
+        : 'DRS not yet published by Baseball Reference for this season.'
+    }
+  ];
+
+  return `
+  <div class="c-breakdown">
+    <div class="c-breakdown-title">CATCHER FORMULA BREAKDOWN · FRV 40% + DRS 25% + ARM 20% + BLOCK 15%</div>
+    ${components.map(c => `
+    <div class="c-comp">
+      <div class="c-comp-dot" style="background:${c.dot}"></div>
+      <div class="c-comp-info">
+        <div class="c-comp-name">${c.name}</div>
+        <div class="c-comp-desc">${c.desc}</div>
+        <div class="c-comp-bar"><div class="c-comp-bar-fill ${c.cls}" style="width:${Math.min(100,Math.max(3,c.norm))}%;background:${c.dot}"></div></div>
+      </div>
+      <div class="c-comp-right">
+        <div class="c-comp-val ${c.cls}">${c.val}</div>
+        <div class="c-comp-wt">${c.wt}</div>
+      </div>
+    </div>`).join('')}
+  </div>`;
+}
+
 function renderPlayer(player, allAtPos) {
   const pos = player.position;
+  const isC = pos === 'C';
   const adj = POS_ADJ[pos] || 0;
   const adjStr = adj >= 0 ? `+${adj}` : `${adj}`;
   const [wOAA, wDRS] = WEIGHTS[pos] || [0.4, 0.35, 0.25];
   const hasDRS = player.drs !== 0;
   const dis = disagreementAnalysis(player);
 
-  // Percentile within position (approximate from rank)
   const total = allAtPos.length;
   const pctile = Math.round(((total - player.rank + 1) / total) * 100);
-
-  // Formula contributions (simplified display)
-  const oaaContrib = (player.oaa > 0 ? (player.oaa * wOAA * 2).toFixed(1) : '0.0');
-  const drsContrib = (hasDRS ? (player.drs * wDRS * 2).toFixed(1) : '—');
 
   document.title = `${player.player} — D-Score`;
 
@@ -304,6 +392,111 @@ function renderPlayer(player, allAtPos) {
       </div>`
     : '';
 
+  // ── Metric grid: catchers get 4 special cards, others get 3 standard ──
+  let metricsHTML = '';
+  if (isC) {
+    const frv = player.frv || 0;
+    const hasFRV = frv !== 0;
+    const csPct = player.cs_pct || 0;
+    const pb = player.pb !== undefined ? player.pb : null;
+    const cs = player.cs || 0;
+    const sb = player.sb || 0;
+    metricsHTML = `
+    <div class="metric-grid" style="grid-template-columns:repeat(2,1fr)">
+      <div class="metric-card frv">
+        <div class="metric-tag">FRV — FRAMING RUNS VALUE</div>
+        <div class="metric-val">${hasFRV ? (frv>=0?'+':'') + frv.toFixed(1) : '—'}</div>
+        <div class="metric-desc">Runs added by stealing called strikes above average. The single biggest component of catcher defense — worth 40% of D-Score.</div>
+        ${!hasFRV ? '<div class="pending-badge">⚠ FRAMING DATA PENDING</div>' : `<div class="metric-bar"><div class="metric-bar-fill" style="width:${Math.min(100,Math.max(5,player.frv_norm||50))}%"></div></div>`}
+      </div>
+      <div class="metric-card arm">
+        <div class="metric-tag">ARM — CAUGHT STEALING</div>
+        <div class="metric-val">${csPct > 0 ? csPct.toFixed(0)+'%' : '—'}</div>
+        <div class="metric-desc">${cs} CS, ${sb} SB allowed. Caught stealing rate vs. league average (~26%). Elite catchers throw out 35%+ of baserunners.</div>
+        ${csPct > 0 ? `<div class="metric-bar"><div class="metric-bar-fill" style="width:${Math.min(100,Math.max(5,player.arm_norm||50))}%"></div></div>` : '<div class="pending-badge">⚠ ARM DATA PENDING</div>'}
+      </div>
+      <div class="metric-card blk">
+        <div class="metric-tag">BLOCKING — PASSED BALLS</div>
+        <div class="metric-val">${pb !== null ? pb : '—'}</div>
+        <div class="metric-desc">Passed balls allowed this season. Lower is better — elite blockers keep the ball in front on short-hops and wild pitches.</div>
+        ${pb !== null ? `<div class="metric-bar"><div class="metric-bar-fill" style="width:${Math.min(100,Math.max(5,player.block_norm||50))}%"></div></div>` : '<div class="pending-badge">⚠ BLOCKING DATA PENDING</div>'}
+      </div>
+      <div class="metric-card catcher-drs">
+        <div class="metric-tag">DRS — DEFENSIVE RUNS SAVED</div>
+        <div class="metric-val">${hasDRS ? (player.drs>=0?'+':'') + player.drs : '—'}</div>
+        <div class="metric-desc">Baseball Reference's overall catcher value in runs. Includes framing, blocking, and arm contributions.</div>
+        ${!hasDRS ? '<div class="pending-badge">⚠ EARLY SEASON — PENDING</div>' : ''}
+      </div>
+    </div>`;
+  } else {
+    metricsHTML = `
+    <div class="metric-grid">
+      <div class="metric-card oaa">
+        <div class="metric-tag">OAA — OUTS ABOVE AVG</div>
+        <div class="metric-val">${player.oaa >= 0 ? '+' : ''}${player.oaa}</div>
+        <div class="metric-desc">Range-based. How many outs saved vs. average on identical chances at ${pos}.</div>
+        <div class="metric-bar"><div class="metric-bar-fill" style="width:${Math.min(100,Math.max(5,pctile))}%"></div></div>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:6px">${pctile}th percentile at ${pos}</div>
+      </div>
+      <div class="metric-card drs">
+        <div class="metric-tag">DRS — DEFENSIVE RUNS SAVED</div>
+        <div class="metric-val">${hasDRS ? (player.drs >= 0 ? '+' : '') + player.drs : '—'}</div>
+        <div class="metric-desc">Outcome-based. Full defensive contribution in runs — range, arm, positioning.</div>
+        ${!hasDRS ? '<div class="pending-badge">⚠ EARLY SEASON — NOT YET PUBLISHED</div>' : ''}
+      </div>
+      <div class="metric-card frv">
+        <div class="metric-tag">FRV — FIELDING RUN VALUE</div>
+        <div class="metric-val">${player.frv !== undefined && player.frv !== 0 ? (player.frv >= 0 ? '+' : '') + player.frv.toFixed(1) : '—'}</div>
+        <div class="metric-desc">Statcast's all-in-one defensive run estimate. Range, throws — combined.</div>
+        ${(player.frv === undefined || player.frv === 0) ? '<div class="pending-badge">⚠ NOT YET LOADED</div>' : ''}
+      </div>
+    </div>`;
+  }
+
+  // ── Analysis section: catchers get breakdown, others get OAA/DRS agreement ──
+  let analysisHTML = '';
+  if (isC) {
+    analysisHTML = `
+    <div class="sec"><h2>Catcher component breakdown</h2><div class="line"></div></div>
+    ${renderCatcherBreakdown(player, pctile)}`;
+  } else {
+    analysisHTML = `
+    <div class="sec"><h2>Metric agreement engine</h2><div class="line"></div></div>
+    <div class="dis-box">
+      <div class="dis-head">
+        <span class="dis-badge ${dis.badge}">${dis.badge === 'agree' ? 'AGREEMENT' : dis.badge === 'disagree' ? 'DISAGREEMENT' : 'PENDING'}</span>
+        <span class="dis-title">${dis.label}</span>
+      </div>
+      <div class="dis-body">${dis.body}</div>
+      ${dis.gap !== null ? `
+      <div class="dis-meter">
+        <div class="dis-side"><div class="dis-metric-name">OAA</div><div class="dis-metric-val oaa">${player.oaa >= 0 ? '+' : ''}${player.oaa}</div></div>
+        <div><div class="dis-vs">VS</div><div class="dis-gap" style="color:${dis.gap <= 5 ? 'var(--accent)' : 'var(--danger)'}">Δ ${dis.gap} pts</div></div>
+        <div class="dis-side"><div class="dis-metric-name">DRS</div><div class="dis-metric-val drs">${player.drs >= 0 ? '+' : ''}${player.drs}</div></div>
+      </div>` : ''}
+    </div>`;
+  }
+
+  // ── Leaderboard context: catchers show FRV + ARM, others show OAA + DRS ──
+  const ctxRows = allAtPos.slice(0, Math.max(7, player.rank + 2)).map(p => {
+    let cols = '';
+    if (isC) {
+      const frvStr = p.frv && p.frv !== 0 ? (p.frv>=0?'+':'')+p.frv.toFixed(1) : '—';
+      const armStr = p.cs_pct > 0 ? p.cs_pct.toFixed(0)+'%' : '—';
+      cols = `<td class="r">${frvStr}</td><td class="r" style="color:var(--muted)">${armStr}</td>`;
+    } else {
+      const drsStr = p.drs === 0 ? '—' : (p.drs >= 0 ? '+' : '') + p.drs;
+      cols = `<td class="r">${p.oaa >= 0 ? '+' : ''}${p.oaa}</td><td class="r" style="color:var(--muted)">${drsStr}</td>`;
+    }
+    return `<tr class="${p.rank === player.rank ? 'me' : ''}" onclick="window.location='player.html?pos=${p.position}&rank=${p.rank}'" style="cursor:pointer">
+      <td><span class="rank-badge ${p.rank===1||p.rank===player.rank?'top':''}">#${p.rank}</span></td>
+      <td style="font-weight:${p.rank===player.rank?'500':'400'}">${p.player}</td>
+      <td style="color:var(--muted);font-family:var(--mono);font-size:12px">${p.team}</td>
+      ${cols}
+      <td class="r" style="font-family:var(--display);font-size:20px;color:${p.rank===player.rank?'var(--accent)':'var(--text)'}">${p.adj_dscore}</td>
+    </tr>`;
+  }).join('');
+
   return `
   <div class="hero">
     <div class="hero-top">
@@ -324,50 +517,16 @@ function renderPlayer(player, allAtPos) {
       <div class="dscore-hero">
         <div class="dscore-label">ADJ. D-SCORE</div>
         <div class="dscore-number">${player.adj_dscore}</div>
-        <div class="dscore-sub">Raw ${player.raw_dscore} ${adjStr !== '0' ? `+ ${pos} adj. ${adjStr}` : ''}</div>
+        <div class="dscore-sub">Raw ${player.raw_dscore} ${adjStr !== '+0' && adjStr !== '0' ? `+ ${pos} adj. ${adjStr}` : ''}</div>
         <div class="dscore-rank">#${player.rank} ${POS_LABELS[pos] || pos}</div>
       </div>
     </div>
     ${bioHTML}
   </div>
 
-  <div class="sec"><h2>Raw metrics</h2><div class="line"></div></div>
-  <div class="metric-grid">
-    <div class="metric-card oaa">
-      <div class="metric-tag">OAA — OUTS ABOVE AVG</div>
-      <div class="metric-val">${player.oaa >= 0 ? '+' : ''}${player.oaa}</div>
-      <div class="metric-desc">Range-based. How many outs saved vs. average on identical chances at ${pos}.</div>
-      <div class="metric-bar"><div class="metric-bar-fill" style="width:${Math.min(100,Math.max(5,pctile))}%"></div></div>
-      <div style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:6px">${pctile}th percentile at ${pos}</div>
-    </div>
-    <div class="metric-card drs">
-      <div class="metric-tag">DRS — DEFENSIVE RUNS SAVED</div>
-      <div class="metric-val">${hasDRS ? (player.drs >= 0 ? '+' : '') + player.drs : '—'}</div>
-      <div class="metric-desc">Outcome-based. Full defensive contribution in runs — range, arm, positioning.</div>
-      ${!hasDRS ? '<div class="pending-badge">⚠ EARLY SEASON — NOT YET PUBLISHED</div>' : ''}
-    </div>
-    <div class="metric-card frv">
-      <div class="metric-tag">FRV — FIELDING RUN VALUE</div>
-      <div class="metric-val">${player.frv !== undefined && player.frv !== 0 ? (player.frv >= 0 ? '+' : '') + player.frv.toFixed(1) : '—'}</div>
-      <div class="metric-desc">Statcast's newer all-in-one defensive run estimate. Range, throws, framing — combined.</div>
-      ${(player.frv === undefined || player.frv === 0) ? '<div class="pending-badge">⚠ NOT YET LOADED</div>' : ''}
-    </div>
-  </div>
-
-  <div class="sec"><h2>Metric agreement engine</h2><div class="line"></div></div>
-  <div class="dis-box">
-    <div class="dis-head">
-      <span class="dis-badge ${dis.badge}">${dis.badge === 'agree' ? 'AGREEMENT' : dis.badge === 'disagree' ? 'DISAGREEMENT' : 'PENDING'}</span>
-      <span class="dis-title">${dis.label}</span>
-    </div>
-    <div class="dis-body">${dis.body}</div>
-    ${dis.gap !== null ? `
-    <div class="dis-meter">
-      <div class="dis-side"><div class="dis-metric-name">OAA</div><div class="dis-metric-val oaa">${player.oaa >= 0 ? '+' : ''}${player.oaa}</div></div>
-      <div><div class="dis-vs">VS</div><div class="dis-gap" style="color:${dis.gap <= 5 ? 'var(--accent)' : 'var(--danger)'}">Δ ${dis.gap} pts</div></div>
-      <div class="dis-side"><div class="dis-metric-name">DRS</div><div class="dis-metric-val drs">${player.drs >= 0 ? '+' : ''}${player.drs}</div></div>
-    </div>` : ''}
-  </div>
+  <div class="sec"><h2>${isC ? 'Catcher metrics' : 'Raw metrics'}</h2><div class="line"></div></div>
+  ${metricsHTML}
+  ${analysisHTML}
 
   <div class="sec"><h2>Positional adjustment</h2><div class="line"></div></div>
   <div class="pos-adj">
@@ -379,19 +538,10 @@ function renderPlayer(player, allAtPos) {
   <table class="ctx-table">
     <thead><tr>
       <th>Rank</th><th>Player</th><th>Team</th>
-      <th class="r">OAA</th><th class="r">DRS</th><th class="r">Adj. D-Score</th>
+      ${isC ? '<th class="r">FRV</th><th class="r">ARM</th>' : '<th class="r">OAA</th><th class="r">DRS</th>'}
+      <th class="r">Adj. D-Score</th>
     </tr></thead>
-    <tbody>
-      ${allAtPos.slice(0, Math.max(7, player.rank + 2)).map(p => `
-        <tr class="${p.rank === player.rank ? 'me' : ''}" onclick="window.location='player.html?pos=${p.position}&rank=${p.rank}'" style="cursor:pointer">
-          <td><span class="rank-badge ${p.rank===1?'top':''}${p.rank===player.rank?' top':''}">#${p.rank}</span></td>
-          <td style="font-weight:${p.rank===player.rank?'500':'400'}">${p.player}</td>
-          <td style="color:var(--muted);font-family:var(--mono);font-size:12px">${p.team}</td>
-          <td class="r">${p.oaa >= 0 ? '+' : ''}${p.oaa}</td>
-          <td class="r" style="color:var(--muted)">${p.drs === 0 ? '—' : (p.drs >= 0 ? '+' : '') + p.drs}</td>
-          <td class="r" style="font-family:var(--display);font-size:20px;color:${p.rank===player.rank?'var(--accent)':'var(--text)'}">${p.adj_dscore}</td>
-        </tr>`).join('')}
-    </tbody>
+    <tbody>${ctxRows}</tbody>
   </table>`;
 }
 
