@@ -10,9 +10,9 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--text);font-family:var(--body);min-height:100vh}
 body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse 80% 50% at 50% -20%,rgba(200,240,96,0.04),transparent)}
-.wrap{max-width:1020px;margin:0 auto;padding:0 28px;position:relative;z-index:1}
+.wrap{max-width:1080px;margin:0 auto;padding:0 28px;position:relative;z-index:1}
 nav{border-bottom:1px solid var(--border);padding:16px 0;position:sticky;top:0;background:rgba(8,10,13,0.92);backdrop-filter:blur(12px);z-index:100}
-nav .inner{max-width:1020px;margin:0 auto;padding:0 28px;display:flex;align-items:center;justify-content:space-between}
+nav .inner{max-width:1080px;margin:0 auto;padding:0 28px;display:flex;align-items:center;justify-content:space-between}
 .nav-logo{text-decoration:none;line-height:1}
 .nav-logo-main{font-family:var(--display);font-size:20px;color:var(--accent);letter-spacing:.08em;display:block}
 .nav-logo-sub{font-family:var(--mono);font-size:9px;color:var(--muted2);letter-spacing:.15em;display:block;margin-top:1px}
@@ -30,22 +30,35 @@ nav .inner{max-width:1020px;margin:0 auto;padding:0 28px;display:flex;align-item
 .pill.live{color:var(--accent);border-color:rgba(200,240,96,0.25);background:rgba(200,240,96,0.06)}
 .pill.partial{color:var(--warn);border-color:rgba(240,160,96,0.25);background:rgba(240,160,96,0.06)}
 .pill.soon{color:var(--muted2);border-color:var(--border)}
-.tab-bar{display:flex;border-bottom:1px solid var(--border);margin-top:28px;overflow-x:auto}
-.tab-btn{font-family:var(--mono);font-size:11px;letter-spacing:.07em;padding:12px 20px;cursor:pointer;border:none;background:none;color:var(--muted2);border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap}
-.tab-btn:hover{color:var(--text)}
-.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
-.pos-tabs{display:flex;gap:6px;flex-wrap:wrap;padding:22px 0 0}
-.pos-tab{font-family:var(--mono);font-size:11px;padding:5px 12px;border-radius:2px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted2);transition:all .15s;white-space:nowrap}
+
+/* ── Filter bar ─────────────────────────────────────────── */
+.filter-bar{display:flex;flex-wrap:wrap;gap:20px;padding:22px 0 18px;border-bottom:1px solid var(--border);align-items:flex-end}
+.filter-group{display:flex;flex-direction:column;gap:7px}
+.filter-group.right{margin-left:auto}
+.filter-label{font-family:var(--mono);font-size:9px;letter-spacing:.14em;color:var(--muted)}
+.pos-pills{display:flex;gap:5px;flex-wrap:wrap}
+.pos-tab{font-family:var(--mono);font-size:11px;padding:5px 11px;border-radius:2px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted2);transition:all .15s;white-space:nowrap}
 .pos-tab:hover{color:var(--text);border-color:var(--border2)}
 .pos-tab.active{background:var(--accent);color:#080a0d;border-color:var(--accent);font-weight:600}
-.twrap{padding:24px 0}
-.thead-row{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:8px}
+.pos-tab.all.active{background:var(--accent2);border-color:var(--accent2)}
+.filter-select{-webkit-appearance:none;appearance:none;background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-family:var(--mono);font-size:11px;padding:6px 32px 6px 11px;border-radius:2px;cursor:pointer;outline:none;min-width:140px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%235a5a5a'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;transition:border-color .15s}
+.filter-select:hover{border-color:rgba(255,255,255,0.2)}
+.filter-select:focus{border-color:var(--accent2);outline:none}
+.filter-select option{background:#1a1f26}
+
+/* ── Table ──────────────────────────────────────────────── */
+.twrap{padding:20px 0 40px}
+.thead-row{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px}
 .ttitle{font-family:var(--display);font-size:30px}
 .tmeta{font-family:var(--mono);font-size:10px;color:var(--muted2);margin-top:2px}
 .warn-tag{font-family:var(--mono);font-size:10px;color:var(--warn);background:rgba(240,160,96,0.08);border:1px solid rgba(240,160,96,0.2);padding:4px 10px;border-radius:2px}
 table{width:100%;border-collapse:collapse}
 thead th{font-family:var(--mono);font-size:9px;letter-spacing:.12em;color:var(--muted);text-align:left;padding:8px 10px;border-bottom:1px solid var(--border);font-weight:400}
 thead th.r{text-align:right}
+thead th.sortable{cursor:pointer;user-select:none;transition:color .15s;white-space:nowrap}
+thead th.sortable:hover{color:var(--text)}
+thead th.sorted{color:var(--accent2)}
+.sarr{font-size:8px;margin-left:3px;vertical-align:middle}
 tbody tr{border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s}
 tbody tr:hover{background:rgba(255,255,255,0.02)}
 tbody tr.r1{background:rgba(200,240,96,0.03)}
@@ -60,6 +73,8 @@ td{padding:10px;vertical-align:middle}
 .tr{text-align:right;font-family:var(--mono);font-size:12px;color:var(--muted2)}
 .tr.oaa{color:var(--accent2)}
 .tr.z{color:rgba(255,255,255,0.12)}
+.tr.sorted-col{color:var(--text)}
+.tpos{text-align:center;font-family:var(--mono);font-size:11px;color:var(--muted2)}
 .tds{text-align:right}
 .dsn{font-family:var(--display);font-size:24px}
 .dsn.e{color:var(--accent)}.dsn.g{color:var(--accent2)}.dsn.a{color:var(--muted2)}
@@ -68,22 +83,10 @@ td{padding:10px;vertical-align:middle}
 .btd{width:60px;padding-right:10px}
 .bt{height:2px;background:rgba(255,255,255,0.05);border-radius:1px;overflow:hidden}
 .bf{height:100%;border-radius:1px;background:var(--accent)}
-.dwar-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:8px;padding:24px 0}
-.dwar-card{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:border-color .2s}
-.dwar-card:hover{border-color:var(--border2)}
-.dwar-card.top{border-color:rgba(200,240,96,0.2)}
-.drk{font-family:var(--display);font-size:26px;color:var(--muted);width:32px;flex-shrink:0;line-height:1}
-.drk.g{color:var(--accent)}
-.dhs{width:40px;height:40px;border-radius:50%;object-fit:cover;background:var(--surface2);border:1px solid var(--border);flex-shrink:0}
-.di{flex:1;min-width:0}
-.dn{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.dm{font-family:var(--mono);font-size:10px;color:var(--muted2);margin-top:1px}
-.dv{font-family:var(--display);font-size:28px;color:var(--accent);flex-shrink:0;line-height:1}
-.dl{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.08em;text-align:right}
 .empty{text-align:center;padding:60px 0;font-family:var(--mono);font-size:12px;color:var(--muted)}
 .err{background:rgba(240,96,96,0.06);border:1px solid rgba(240,96,96,0.2);border-radius:4px;padding:20px 24px;margin:40px 0;font-family:var(--mono);font-size:12px;color:var(--danger);line-height:1.8}
 footer{border-top:1px solid var(--border);padding:36px 0;margin-top:40px}
-footer .inner{max-width:1020px;margin:0 auto;padding:0 28px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}
+footer .inner{max-width:1080px;margin:0 auto;padding:0 28px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}
 .flogo{font-family:var(--display);font-size:20px;color:var(--accent);letter-spacing:.08em}
 .ftag{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.12em;margin-top:2px}
 .fnote{font-family:var(--mono);font-size:10px;color:var(--muted);text-align:right;line-height:1.8}
@@ -117,10 +120,6 @@ footer .inner{max-width:1020px;margin:0 auto;padding:0 28px;display:flex;justify
       <span class="pill soon" id="frvPill">○ FRV — COMING SOON</span>
     </div>
   </div>
-  <div class="tab-bar">
-    <button class="tab-btn active" onclick="switchTab('rankings')">POSITION RANKINGS</button>
-    <button class="tab-btn" onclick="switchTab('dwar')">D-WAR LEADERS</button>
-  </div>
   <div id="mainContent"><div class="empty">Loading...</div></div>
 </div>
 <footer>
@@ -132,7 +131,9 @@ footer .inner{max-width:1020px;margin:0 auto;padding:0 28px;display:flex;justify
 <script>
 var PL={CF:'Center Field',SS:'Shortstop',C:'Catcher','2B':'Second Base','3B':'Third Base',RF:'Right Field',LF:'Left Field','1B':'First Base'};
 var PO=['CF','SS','C','2B','3B','RF','LF','1B'];
-var D=null,tab='rankings',pos='SS';
+var D=null;
+var filterPos='ALL', filterTeam='ALL', sortCol='adj_dscore', sortAsc=false;
+
 function sc(s){return s>=75?'e':s>=55?'g':'a'}
 function wc(w){return w>0?'p':w<0?'n':'z'}
 
@@ -153,72 +154,133 @@ function makeHs(url,cls,init){
   return wrap.innerHTML;
 }
 
-function posTabs(){
-  return '<div class="pos-tabs">'+PO.map(function(p){
-    var active=p===pos?'active':'';
-    return '<button class="pos-tab '+active+'" onclick="switchPos(\''+p+'\')">'+p+'</button>';
-  }).join('')+'</div>';
+function getAllPlayers(){
+  var all=[];
+  PO.forEach(function(p){(D.rankings[p]||[]).forEach(function(pl){all.push(pl);});});
+  return all;
 }
 
-function renderRankings(){
-  var pl=D.rankings[pos]||[];
-  var hasDRS=pl.some(function(p){return p.drs!==0});
-  var mx=pl.length?pl[0].adj_dscore:100;
-  if(!pl.length) return posTabs()+'<div class="empty">No data for '+PL[pos]+'</div>';
-  var rows=pl.map(function(p,i){
+function getTeams(){
+  var seen={}, teams=[];
+  getAllPlayers().forEach(function(p){if(p.team&&!seen[p.team]){seen[p.team]=1;teams.push(p.team);}});
+  return teams.sort();
+}
+
+function getFilteredPlayers(){
+  var list;
+  if(filterPos==='ALL'){
+    list=getAllPlayers();
+  } else {
+    list=(D.rankings[filterPos]||[]).slice();
+  }
+  if(filterTeam!=='ALL'){
+    list=list.filter(function(p){return p.team===filterTeam;});
+  }
+  list=list.slice().sort(function(a,b){
+    var va=+(a[sortCol])||0, vb=+(b[sortCol])||0;
+    if(va===vb) return (b.adj_dscore||0)-(a.adj_dscore||0);
+    return sortAsc ? (va-vb) : (vb-va);
+  });
+  return list;
+}
+
+function setPos(p){filterPos=p;render();}
+function setTeam(t){filterTeam=t;render();}
+function setSort(col){
+  if(sortCol===col){sortAsc=!sortAsc;}
+  else{sortCol=col;sortAsc=false;}
+  render();
+}
+
+function sortArrow(col){
+  if(sortCol!==col) return '<span class="sarr" style="color:var(--muted)">⬍</span>';
+  return '<span class="sarr">'+(sortAsc?'▲':'▼')+'</span>';
+}
+
+function sortTh(col,label,align){
+  var a=align||'r';
+  return '<th class="'+a+' sortable'+(sortCol===col?' sorted':'')+'" onclick="setSort(\''+col+'\')">'
+    +label+sortArrow(col)+'</th>';
+}
+
+function renderFilters(teams){
+  var posHTML=['ALL'].concat(PO).map(function(p){
+    var lbl=p==='ALL'?'ALL':p;
+    var cls='pos-tab'+(p==='ALL'?' all':'')+(filterPos===p?' active':'');
+    return '<button class="'+cls+'" onclick="setPos(\''+p+'\')">'+lbl+'</button>';
+  }).join('');
+
+  var teamOpts='<option value="ALL">All Teams</option>'
+    +teams.map(function(t){
+      return '<option value="'+t+'"'+(filterTeam===t?' selected':'')+'>'+t+'</option>';
+    }).join('');
+
+  return '<div class="filter-bar">'
+    +'<div class="filter-group"><div class="filter-label">POSITION</div><div class="pos-pills">'+posHTML+'</div></div>'
+    +'<div class="filter-group right"><div class="filter-label">TEAM</div>'
+    +'<select class="filter-select" onchange="setTeam(this.value)">'+teamOpts+'</select></div>'
+    +'</div>';
+}
+
+function renderTable(players){
+  var showPos=filterPos==='ALL';
+  var hasDRS=players.some(function(p){return p.drs!==0;});
+
+  if(!players.length){
+    return '<div class="twrap"><div class="empty">No players match the current filters.</div></div>';
+  }
+
+  var rows=players.map(function(p,i){
     var init=(p.player.split(',')[0]||'?').charAt(0).toUpperCase();
     var hs=makeHs(p.headshot,'hs',init);
     var oaa=(p.oaa>=0?'+':'')+p.oaa;
     var drs=p.drs===0?'—':(p.drs>=0?'+':'')+p.drs;
     var dwar=(p.dwar>=0?'+':'')+p.dwar;
-    var pct=mx>0?Math.round(p.adj_dscore/mx*100):0;
+    var pct=Math.round(Math.min(p.adj_dscore/99,1)*100);
+    var oaaCls='tr oaa'+(sortCol==='oaa'?' sorted-col':'');
+    var drsCls='tr'+(p.drs===0?' z':'')+(sortCol==='drs'?' sorted-col':'');
+    var dwarCls='tdw '+wc(p.dwar);
     return '<tr class="'+(i===0?'r1':'')+'" onclick="location=\'player.html?pos='+p.position+'&rank='+p.rank+'\'">'
       +'<td class="rnk '+(i===0?'g':'')+'">'+(i===0?'#1':'#'+(i+1))+'</td>'
-      +'<td><div class="tplayer">'+hs+'<div><div class="pn">'+p.player+'</div><div class="pt">'+p.team+'</div></div></div></td>'
-      +'<td class="tr oaa">'+oaa+'</td>'
-      +'<td class="tr '+(p.drs===0?'z':'')+'">'+drs+'</td>'
-      +'<td class="tdw '+wc(p.dwar)+'">'+dwar+'</td>'
+      +'<td><div class="tplayer">'+hs+'<div><div class="pn">'+p.player+'</div>'
+      +'<div class="pt">'+p.team+(showPos?' · '+p.position:'')+'</div></div></div></td>'
+      +(showPos?'<td class="tpos">'+p.position+'</td>':'')
+      +'<td class="'+oaaCls+'">'+oaa+'</td>'
+      +'<td class="'+drsCls+'">'+drs+'</td>'
+      +'<td class="'+dwarCls+'">'+dwar+'</td>'
       +'<td class="tds"><span class="dsn '+sc(p.adj_dscore)+'">'+p.adj_dscore+'</span></td>'
       +'<td class="btd"><div class="bt"><div class="bf" style="width:'+pct+'%"></div></div></td>'
       +'</tr>';
   }).join('');
-  return posTabs()
-    +'<div class="twrap"><div class="thead-row">'
-    +'<div><div class="ttitle">'+PL[pos]+'</div><div class="tmeta">'+pl.length+' qualified · The Cutoff D-Score</div></div>'
-    +(!hasDRS?'<span class="warn-tag">DRS pending</span>':'')
-    +'</div><table><thead><tr><th>#</th><th>Player</th><th class="r">OAA</th><th class="r">DRS</th><th class="r">D-WAR</th><th class="r">D-SCORE</th><th></th></tr></thead>'
+
+  var titleText=filterPos==='ALL'?'All Positions':PL[filterPos]||filterPos;
+  var teamText=filterTeam==='ALL'?'':' · '+filterTeam;
+  var sortLabel={adj_dscore:'D-Score',oaa:'OAA',drs:'DRS',dwar:'D-WAR'}[sortCol]||sortCol;
+
+  return '<div class="twrap">'
+    +'<div class="thead-row"><div>'
+    +'<div class="ttitle">'+titleText+teamText+'</div>'
+    +'<div class="tmeta">'+players.length+' players · sorted by '+sortLabel+(sortAsc?' ▲':' ▼')+' · The Cutoff D-Score</div>'
+    +'</div>'
+    +(!hasDRS?'<span class="warn-tag">DRS pending early season</span>':'')
+    +'</div>'
+    +'<table><thead><tr>'
+    +'<th>#</th><th>Player</th>'
+    +(showPos?'<th class="r">POS</th>':'')
+    +sortTh('oaa','OAA')
+    +sortTh('drs','DRS')
+    +sortTh('dwar','D-WAR')
+    +sortTh('adj_dscore','D-SCORE')
+    +'<th></th>'
+    +'</tr></thead>'
     +'<tbody>'+rows+'</tbody></table></div>';
 }
 
-function renderDwar(){
-  var l=D.dwar_leaders||[];
-  if(!l.length) return '<div class="empty">D-WAR leaders loading</div>';
-  var cards=l.map(function(p,i){
-    var init=(p.player.split(',')[0]||'?').charAt(0).toUpperCase();
-    var hs=makeHs(p.headshot,'dhs',init);
-    var dwar=(p.dwar>=0?'+':'')+p.dwar;
-    return '<div class="dwar-card '+(i<3?'top':'')+'" onclick="location=\'player.html?pos='+p.position+'&rank='+p.rank+'\'">'
-      +'<div class="drk '+(i<3?'g':'')+'">'+( i+1)+'</div>'
-      +hs
-      +'<div class="di"><div class="dn">'+p.player+'</div><div class="dm">'+p.team+' · '+p.position+'</div></div>'
-      +'<div><div class="dv">'+dwar+'</div><div class="dl">D-WAR</div></div>'
-      +'</div>';
-  }).join('');
-  return '<div style="padding:22px 0 14px">'
-    +'<div class="ttitle">D-WAR Leaders</div>'
-    +'<div class="tmeta" style="font-family:var(--mono);font-size:10px;color:var(--muted2);margin-top:3px">Defensive Wins Above Replacement · All positions · Top 30</div>'
-    +'</div><div class="dwar-grid">'+cards+'</div>';
+function render(){
+  var teams=getTeams();
+  var players=getFilteredPlayers();
+  document.getElementById('mainContent').innerHTML=renderFilters(teams)+renderTable(players);
 }
-
-function switchTab(t){
-  tab=t;
-  document.querySelectorAll('.tab-btn').forEach(function(b,i){
-    b.classList.toggle('active',['rankings','dwar'][i]===t);
-  });
-  render();
-}
-function switchPos(p){pos=p;render();}
-function render(){document.getElementById('mainContent').innerHTML=tab==='rankings'?renderRankings():renderDwar();}
 
 async function init(){
   try{
