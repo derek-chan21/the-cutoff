@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Player Profile — D-Score</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0a0c0f; --surface:#111417; --border:rgba(255,255,255,0.07);
+    --text:#e8e6e0; --muted:#6b6b6b; --accent:#c8f060; --accent2:#60d4f0;
+    --warn:#f0a060; --danger:#f06060;
+    --mono:'DM Mono',monospace; --display:'Bebas Neue',sans-serif; --body:'DM Sans',sans-serif;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:var(--text); font-family:var(--body); min-height:100vh; }
+  body::before {
+    content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+    background-image:linear-gradient(rgba(255,255,255,0.015) 1px,transparent 1px),
+                     linear-gradient(90deg,rgba(255,255,255,0.015) 1px,transparent 1px);
+    background-size:40px 40px;
+  }
+  .wrap { max-width:860px; margin:0 auto; padding:0 24px; position:relative; z-index:1; }
+
+  nav { border-bottom:1px solid var(--border); padding:18px 0; }
+  nav .inner { max-width:860px; margin:0 auto; padding:0 24px; display:flex; align-items:center; justify-content:space-between; }
+  .nav-logo { font-family:var(--display); font-size:22px; color:var(--accent); text-decoration:none; letter-spacing:.05em; }
+  .nav-back { font-family:var(--mono); font-size:12px; color:var(--muted); text-decoration:none; letter-spacing:.06em; transition:color .2s; }
+  .nav-back:hover { color:var(--text); }
+
+  /* HERO */
+  .hero { padding:48px 0 36px; border-bottom:1px solid var(--border); animation:fadeUp .4s ease both; }
+  .hero-top { display:flex; align-items:flex-start; justify-content:space-between; gap:24px; flex-wrap:wrap; }
+  .hero-id { display:flex; align-items:flex-start; gap:20px; flex:1; min-width:0; }
+  .player-photo { width:120px; height:120px; border-radius:50%; object-fit:cover; background:var(--surface); border:2px solid var(--border); flex-shrink:0; }
+  .player-photo-fb { width:120px; height:120px; border-radius:50%; background:var(--surface); border:2px solid var(--border); display:flex; align-items:center; justify-content:center; font-family:var(--display); font-size:48px; color:var(--muted); flex-shrink:0; }
+  .position-tag {
+    font-family:var(--mono); font-size:11px; letter-spacing:.12em; color:var(--accent);
+    background:rgba(200,240,96,0.08); border:1px solid rgba(200,240,96,0.2);
+    padding:4px 10px; border-radius:3px; display:inline-block; margin-bottom:14px;
+  }
+  .player-name { font-family:var(--display); font-size:clamp(48px,8vw,76px); line-height:.92; margin-bottom:14px; }
+  .player-meta { display:flex; gap:16px; flex-wrap:wrap; font-family:var(--mono); font-size:12px; color:var(--muted); }
+  .dot { width:3px; height:3px; border-radius:50%; background:var(--muted); display:inline-block; align-self:center; }
+  .dscore-hero { text-align:right; flex-shrink:0; }
+  .dscore-label { font-family:var(--mono); font-size:11px; letter-spacing:.1em; color:var(--muted); margin-bottom:4px; }
+  .dscore-number { font-family:var(--display); font-size:clamp(64px,10vw,100px); line-height:1; color:var(--accent); }
+  .dscore-sub { font-family:var(--mono); font-size:11px; color:var(--muted); margin-top:4px; }
+  .dscore-rank { font-family:var(--mono); font-size:12px; color:var(--accent2); margin-top:6px; }
+
+  /* BIO STRIP */
+  .bio-strip { display:flex; flex-wrap:wrap; gap:0; margin-top:24px; background:var(--surface); border:1px solid var(--border); border-radius:6px; overflow:hidden; }
+  .bio-item { flex:1 1 110px; padding:14px 18px; border-right:1px solid var(--border); }
+  .bio-item:last-child { border-right:none; }
+  .bio-label { font-family:var(--mono); font-size:9px; letter-spacing:.14em; color:var(--muted); margin-bottom:4px; }
+  .bio-value { font-family:var(--display); font-size:20px; color:var(--text); letter-spacing:.02em; }
+  .bio-value.sm { font-family:var(--body); font-size:13px; font-weight:500; }
+  .bio-birth { padding:12px 18px; font-family:var(--mono); font-size:11px; color:var(--muted); border-top:1px solid var(--border); width:100%; }
+
+  /* SECTION HEADERS */
+  .sec { display:flex; align-items:center; gap:12px; margin:36px 0 16px; }
+  .sec h2 { font-family:var(--mono); font-size:11px; font-weight:500; letter-spacing:.12em; color:var(--muted); text-transform:uppercase; white-space:nowrap; }
+  .sec .line { flex:1; height:1px; background:var(--border); }
+
+  /* METRIC CARDS */
+  .metric-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  .metric-card {
+    background:var(--surface); border:1px solid var(--border); border-radius:6px;
+    padding:18px; position:relative; overflow:hidden; transition:border-color .2s;
+  }
+  .metric-card:hover { border-color:rgba(255,255,255,0.15); }
+  .metric-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; }
+  .metric-card.oaa::before  { background:var(--accent2); }
+  .metric-card.drs::before  { background:var(--warn); }
+  .metric-card.frv::before  { background:var(--accent); }
+  .metric-card.raw::before  { background:var(--accent); }
+  .metric-tag { font-family:var(--mono); font-size:10px; letter-spacing:.1em; color:var(--muted); margin-bottom:8px; }
+  .metric-val { font-family:var(--display); font-size:40px; line-height:1; margin-bottom:6px; }
+  .metric-card.oaa .metric-val { color:var(--accent2); }
+  .metric-card.drs .metric-val { color:var(--warn); }
+  .metric-card.frv .metric-val { color:var(--accent); }
+  .metric-card.raw .metric-val { color:var(--accent); }
+  .metric-desc { font-size:12px; color:var(--muted); line-height:1.5; }
+  .metric-bar { height:3px; background:rgba(255,255,255,0.06); border-radius:2px; margin-top:12px; overflow:hidden; }
+  .metric-bar-fill { height:100%; border-radius:2px; }
+  .oaa .metric-bar-fill { background:var(--accent2); }
+  .drs .metric-bar-fill { background:var(--warn); }
+  .frv .metric-bar-fill { background:var(--accent); }
+  .raw .metric-bar-fill { background:var(--accent); }
+  .pending-badge {
+    font-family:var(--mono); font-size:10px; color:var(--warn);
+    background:rgba(240,160,96,0.08); border:1px solid rgba(240,160,96,0.2);
+    padding:2px 7px; border-radius:3px; display:inline-block; margin-top:8px;
+  }
+
+  /* DISAGREEMENT */
+  .dis-box {
+    background:var(--surface); border:1px solid var(--border);
+    border-left:3px solid var(--accent); border-radius:6px; padding:20px 24px;
+  }
+  .dis-head { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .dis-badge {
+    font-family:var(--mono); font-size:10px; letter-spacing:.08em;
+    padding:3px 8px; border-radius:3px; border:1px solid;
+  }
+  .dis-badge.agree { color:var(--accent); border-color:rgba(200,240,96,0.3); background:rgba(200,240,96,0.08); }
+  .dis-badge.disagree { color:var(--danger); border-color:rgba(240,96,96,0.3); background:rgba(240,96,96,0.08); }
+  .dis-badge.pending { color:var(--muted); border-color:var(--border); }
+  .dis-title { font-size:14px; font-weight:500; }
+  .dis-body { font-size:13px; color:var(--muted); line-height:1.7; }
+  .dis-body strong { color:var(--text); font-weight:500; }
+  .dis-meter { display:flex; align-items:center; gap:16px; margin-top:16px; }
+  .dis-side { flex:1; text-align:center; }
+  .dis-metric-name { font-family:var(--mono); font-size:10px; letter-spacing:.08em; color:var(--muted); margin-bottom:4px; }
+  .dis-metric-val { font-family:var(--display); font-size:30px; }
+  .dis-metric-val.oaa { color:var(--accent2); }
+  .dis-metric-val.drs { color:var(--warn); }
+  .dis-vs { font-family:var(--mono); font-size:11px; color:var(--muted); }
+  .dis-gap { font-family:var(--mono); font-size:11px; text-align:center; margin-top:6px; }
+
+  /* FORMULA */
+  .formula-box { background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:20px 24px; }
+  .formula-row { display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border); }
+  .formula-row:last-child { border-bottom:none; }
+  .formula-row:first-child { padding-top:0; }
+  .formula-left { display:flex; align-items:center; gap:10px; }
+  .formula-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .formula-name { font-size:14px; font-weight:500; }
+  .formula-weight { font-family:var(--mono); font-size:11px; color:var(--muted); }
+  .formula-right { display:flex; align-items:center; gap:12px; }
+  .formula-raw { font-family:var(--mono); font-size:12px; color:var(--muted); }
+  .formula-contrib { font-family:var(--mono); font-size:14px; font-weight:500; min-width:44px; text-align:right; }
+  .formula-total { display:flex; justify-content:space-between; align-items:center; margin-top:14px; padding-top:14px; border-top:1px solid rgba(255,255,255,0.12); }
+  .formula-total-label { font-family:var(--mono); font-size:12px; color:var(--muted); }
+  .formula-total-adj { font-family:var(--mono); font-size:11px; color:var(--muted); }
+  .formula-total-val { font-family:var(--display); font-size:34px; color:var(--accent); }
+
+  /* POS ADJ */
+  .pos-adj { background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:16px 20px; display:flex; align-items:flex-start; gap:16px; }
+  .pos-adj-val { font-family:var(--display); font-size:34px; color:var(--accent); flex-shrink:0; line-height:1; }
+  .pos-adj-text { font-size:13px; color:var(--muted); line-height:1.6; }
+  .pos-adj-text strong { color:var(--text); }
+
+  /* CONTEXT TABLE */
+  .ctx-table { width:100%; border-collapse:collapse; }
+  .ctx-table th { font-family:var(--mono); font-size:10px; letter-spacing:.1em; color:var(--muted); text-align:left; padding:8px 0; border-bottom:1px solid var(--border); font-weight:400; }
+  .ctx-table th.r { text-align:right; }
+  .ctx-table td { padding:11px 0; border-bottom:1px solid var(--border); font-size:13px; color:var(--text); vertical-align:middle; }
+  .ctx-table td.r { text-align:right; font-family:var(--mono); font-size:13px; }
+  .ctx-table tr:last-child td { border-bottom:none; }
+  .ctx-table tr.me td { color:var(--accent); }
+  .rank-badge { font-family:var(--mono); font-size:11px; color:var(--muted); padding:2px 6px; border:1px solid var(--border); border-radius:3px; }
+  .rank-badge.top { color:var(--accent); border-color:rgba(200,240,96,0.3); }
+
+  footer { border-top:1px solid var(--border); padding:32px 0; margin-top:60px; }
+  footer .inner { max-width:860px; margin:0 auto; padding:0 24px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; }
+  .footer-logo { font-family:var(--display); font-size:18px; color:var(--accent); }
+  .footer-note { font-family:var(--mono); font-size:11px; color:var(--muted); }
+
+  @keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+  .hero { animation:fadeUp .4s ease both; }
+  .metric-grid,.dis-box,.formula-box,.pos-adj,.ctx-table { animation:fadeUp .4s .1s ease both; }
+
+  @media(max-width:580px) {
+    .metric-grid { grid-template-columns:1fr 1fr; }
+    .hero-top { flex-direction:column-reverse; }
+    .dscore-hero { text-align:left; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="inner">
+    <a class="nav-logo" href="index.html">THE CUTOFF</a>
+    <a class="nav-back" href="index.html">← Back to rankings</a>
+  </div>
+</nav>
+
+<div class="wrap" id="pageContent">
+  <div style="text-align:center;padding:80px 0;font-family:var(--mono);font-size:13px;color:var(--muted)">Loading player...</div>
+</div>
+
+<footer>
+  <div class="inner">
+    <div class="footer-logo">THE CUTOFF</div>
+    <div class="footer-note">Data: Baseball Savant · Baseball Reference · Updated daily</div>
+  </div>
+</footer>
+
+<script>
+const POS_LABELS = {
+  CF:'Center Field', SS:'Shortstop', C:'Catcher',
+  '2B':'Second Base', '3B':'Third Base', RF:'Right Field',
+  LF:'Left Field', '1B':'First Base'
+};
+
+const POS_ADJ = { C:8, SS:7, CF:5, '2B':3, '3B':2, RF:0, LF:-2, '1B':-7 };
+
+const POS_ADJ_TEXT = {
+  SS: 'Shortstop carries the highest infield positional adjustment. SS must cover the most ground of any infield position, handle the widest ball trajectories, and make the longest routine throw to first.',
+  CF: 'Center fielders cover the largest outfield territory and back up both corners. Speed and range are at an extreme premium, making elite CF defense among the most valuable on the field.',
+  C:  'Catcher is the most defensively demanding position. Framing, blocking, game-calling, and arm strength combine to make an elite catcher irreplaceable in run prevention.',
+  '2B': 'Second base requires quick reactions, pivot ability on double plays, and solid range up the middle. High-traffic position with significant impact on run prevention.',
+  '3B': 'The hot corner demands elite reaction time on hard-hit balls and a strong arm for the long throw across the diamond.',
+  RF:  'Right fielders need the strongest outfield arm. Arm value is captured in DRS weighting. Covers less territory than CF so positional adjustment is neutral.',
+  LF:  'Left field is traditionally the least demanding outfield position — lowest arm demand, least range required.',
+  '1B': 'First base is primarily an offensive position. Defensive skill matters for scooping throws and footwork, but the position is far less demanding than up-the-middle spots.',
+};
+
+const WEIGHTS = {
+  CF:[0.50,0.30,0.20], LF:[0.35,0.40,0.25], RF:[0.35,0.40,0.25],
+  SS:[0.45,0.35,0.20], '2B':[0.40,0.38,0.22], '3B':[0.35,0.40,0.25],
+  '1B':[0.20,0.50,0.30], C:[0.00,0.35,0.65],
+};
+
+function getParams() {
+  const p = new URLSearchParams(window.location.search);
+  return { pos: p.get('pos') || 'SS', rank: parseInt(p.get('rank') || '1') };
+}
+
+function disagreementAnalysis(player) {
+  const oaa = player.oaa;
+  const drs = player.drs;
+  const hasDRS = drs !== 0;
+
+  if (!hasDRS) {
+    return {
+      badge: 'pending',
+      label: 'DRS not yet available',
+      body: `Early in the 2026 season, Baseball Reference hasn't published full DRS data yet. Right now this player's D-Score is based entirely on <strong>OAA from Baseball Savant</strong>. DRS will be incorporated automatically as the season progresses and the sample size grows.`,
+      gap: null
+    };
+  }
+
+  const gap = Math.abs(oaa - drs);
+  if (gap <= 5) {
+    return {
+      badge: 'agree',
+      label: 'OAA and DRS agree',
+      body: `Both metrics tell the same defensive story. When OAA and DRS align, it's strong evidence the player's D-Score is an accurate reflection of their real defensive value — not a statistical artifact of one measurement system.`,
+      gap
+    };
+  } else if (oaa > drs) {
+    return {
+      badge: 'disagree',
+      label: 'OAA rates higher than DRS',
+      body: `OAA is leading DRS by ${gap} points. This typically means <strong>range and first-step quickness</strong> are the primary driver of value — skills OAA captures precisely via Statcast. DRS being lower can indicate the arm or double play contributions aren't as strong as the range numbers.`,
+      gap
+    };
+  } else {
+    return {
+      badge: 'disagree',
+      label: 'DRS rates higher than OAA',
+      body: `DRS is leading OAA by ${gap} points. This often means <strong>arm strength or positional awareness</strong> is the separator — skills DRS captures that Statcast's range-focused OAA doesn't fully credit. This player may be more valuable than a pure range metric suggests.`,
+      gap
+    };
+  }
+}
+
+function renderPlayer(player, allAtPos) {
+  const pos = player.position;
+  const adj = POS_ADJ[pos] || 0;
+  const adjStr = adj >= 0 ? `+${adj}` : `${adj}`;
+  const [wOAA, wDRS] = WEIGHTS[pos] || [0.4, 0.35, 0.25];
+  const hasDRS = player.drs !== 0;
+  const dis = disagreementAnalysis(player);
+
+  // Percentile within position (approximate from rank)
+  const total = allAtPos.length;
+  const pctile = Math.round(((total - player.rank + 1) / total) * 100);
+
+  // Formula contributions (simplified display)
+  const oaaContrib = (player.oaa > 0 ? (player.oaa * wOAA * 2).toFixed(1) : '0.0');
+  const drsContrib = (hasDRS ? (player.drs * wDRS * 2).toFixed(1) : '—');
+
+  document.title = `${player.player} — D-Score`;
+
+  const initial = (player.player.split(',')[0] || '?').charAt(0).toUpperCase();
+  const photoHTML = player.headshot
+    ? `<img class="player-photo" src="${player.headshot}" alt="" onerror="this.outerHTML='<div class=\\'player-photo-fb\\'>${initial}</div>'">`
+    : `<div class="player-photo-fb">${initial}</div>`;
+
+  const bio = player.bio || {};
+  const handed = [bio.bats && `BATS ${bio.bats}`, bio.throws && `THROWS ${bio.throws}`]
+    .filter(Boolean).join(' / ');
+  const bioItems = [];
+  if (bio.team || player.team) bioItems.push({ label: 'TEAM', value: bio.team || player.team, sm: true });
+  if (bio.position_name || pos) bioItems.push({ label: 'POSITION', value: bio.position_name || POS_LABELS[pos] || pos, sm: true });
+  if (bio.height) bioItems.push({ label: 'HEIGHT', value: bio.height });
+  if (bio.weight) bioItems.push({ label: 'WEIGHT', value: `${bio.weight} lb`, sm: true });
+  if (bio.age) bioItems.push({ label: 'AGE', value: bio.age });
+  if (handed) bioItems.push({ label: 'B / T', value: handed, sm: true });
+  if (bio.jersey) bioItems.push({ label: 'NO.', value: `#${bio.jersey}` });
+  const bioHTML = bioItems.length
+    ? `<div class="bio-strip">
+        ${bioItems.map(b => `
+          <div class="bio-item">
+            <div class="bio-label">${b.label}</div>
+            <div class="bio-value${b.sm ? ' sm' : ''}">${b.value}</div>
+          </div>`).join('')}
+        ${bio.birthplace ? `<div class="bio-birth">Born: ${bio.birthplace}</div>` : ''}
+      </div>`
+    : '';
+
+  return `
+  <div class="hero">
+    <div class="hero-top">
+      <div class="hero-id">
+        ${photoHTML}
+        <div>
+          <div class="position-tag">${pos} — ${POS_LABELS[pos] || pos}</div>
+          <div class="player-name">${player.player.replace(',','<br>')}</div>
+          <div class="player-meta">
+            <span>${player.team}</span>
+            <span class="dot"></span>
+            <span>#${player.rank} at ${pos}</span>
+            <span class="dot"></span>
+            <span>Top ${100-pctile+1}% defensively</span>
+          </div>
+        </div>
+      </div>
+      <div class="dscore-hero">
+        <div class="dscore-label">ADJ. D-SCORE</div>
+        <div class="dscore-number">${player.adj_dscore}</div>
+        <div class="dscore-sub">Raw ${player.raw_dscore} ${adjStr !== '0' ? `+ ${pos} adj. ${adjStr}` : ''}</div>
+        <div class="dscore-rank">#${player.rank} ${POS_LABELS[pos] || pos}</div>
+      </div>
+    </div>
+    ${bioHTML}
+  </div>
+
+  <div class="sec"><h2>Raw metrics</h2><div class="line"></div></div>
+  <div class="metric-grid">
+    <div class="metric-card oaa">
+      <div class="metric-tag">OAA — OUTS ABOVE AVG</div>
+      <div class="metric-val">${player.oaa >= 0 ? '+' : ''}${player.oaa}</div>
+      <div class="metric-desc">Range-based. How many outs saved vs. average on identical chances at ${pos}.</div>
+      <div class="metric-bar"><div class="metric-bar-fill" style="width:${Math.min(100,Math.max(5,pctile))}%"></div></div>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:6px">${pctile}th percentile at ${pos}</div>
+    </div>
+    <div class="metric-card drs">
+      <div class="metric-tag">DRS — DEFENSIVE RUNS SAVED</div>
+      <div class="metric-val">${hasDRS ? (player.drs >= 0 ? '+' : '') + player.drs : '—'}</div>
+      <div class="metric-desc">Outcome-based. Full defensive contribution in runs — range, arm, positioning.</div>
+      ${!hasDRS ? '<div class="pending-badge">⚠ EARLY SEASON — NOT YET PUBLISHED</div>' : ''}
+    </div>
+    <div class="metric-card frv">
+      <div class="metric-tag">FRV — FIELDING RUN VALUE</div>
+      <div class="metric-val">${player.frv !== undefined && player.frv !== 0 ? (player.frv >= 0 ? '+' : '') + player.frv.toFixed(1) : '—'}</div>
+      <div class="metric-desc">Statcast's newer all-in-one defensive run estimate. Range, throws, framing — combined.</div>
+      ${(player.frv === undefined || player.frv === 0) ? '<div class="pending-badge">⚠ NOT YET LOADED</div>' : ''}
+    </div>
+  </div>
+
+  <div class="sec"><h2>Metric agreement engine</h2><div class="line"></div></div>
+  <div class="dis-box">
+    <div class="dis-head">
+      <span class="dis-badge ${dis.badge}">${dis.badge === 'agree' ? 'AGREEMENT' : dis.badge === 'disagree' ? 'DISAGREEMENT' : 'PENDING'}</span>
+      <span class="dis-title">${dis.label}</span>
+    </div>
+    <div class="dis-body">${dis.body}</div>
+    ${dis.gap !== null ? `
+    <div class="dis-meter">
+      <div class="dis-side"><div class="dis-metric-name">OAA</div><div class="dis-metric-val oaa">${player.oaa >= 0 ? '+' : ''}${player.oaa}</div></div>
+      <div><div class="dis-vs">VS</div><div class="dis-gap" style="color:${dis.gap <= 5 ? 'var(--accent)' : 'var(--danger)'}">Δ ${dis.gap} pts</div></div>
+      <div class="dis-side"><div class="dis-metric-name">DRS</div><div class="dis-metric-val drs">${player.drs >= 0 ? '+' : ''}${player.drs}</div></div>
+    </div>` : ''}
+  </div>
+
+  <div class="sec"><h2>Positional adjustment</h2><div class="line"></div></div>
+  <div class="pos-adj">
+    <div class="pos-adj-val">${adjStr}</div>
+    <div class="pos-adj-text"><strong>${POS_LABELS[pos] || pos} adjustment.</strong> ${POS_ADJ_TEXT[pos] || ''} This converts the raw D-Score into a number directly comparable across all positions.</div>
+  </div>
+
+  <div class="sec"><h2>${POS_LABELS[pos] || pos} leaderboard context</h2><div class="line"></div></div>
+  <table class="ctx-table">
+    <thead><tr>
+      <th>Rank</th><th>Player</th><th>Team</th>
+      <th class="r">OAA</th><th class="r">DRS</th><th class="r">Adj. D-Score</th>
+    </tr></thead>
+    <tbody>
+      ${allAtPos.slice(0, Math.max(7, player.rank + 2)).map(p => `
+        <tr class="${p.rank === player.rank ? 'me' : ''}" onclick="window.location='player.html?pos=${p.position}&rank=${p.rank}'" style="cursor:pointer">
+          <td><span class="rank-badge ${p.rank===1?'top':''}${p.rank===player.rank?' top':''}">#${p.rank}</span></td>
+          <td style="font-weight:${p.rank===player.rank?'500':'400'}">${p.player}</td>
+          <td style="color:var(--muted);font-family:var(--mono);font-size:12px">${p.team}</td>
+          <td class="r">${p.oaa >= 0 ? '+' : ''}${p.oaa}</td>
+          <td class="r" style="color:var(--muted)">${p.drs === 0 ? '—' : (p.drs >= 0 ? '+' : '') + p.drs}</td>
+          <td class="r" style="font-family:var(--display);font-size:20px;color:${p.rank===player.rank?'var(--accent)':'var(--text)'}">${p.adj_dscore}</td>
+        </tr>`).join('')}
+    </tbody>
+  </table>`;
+}
+
+async function init() {
+  const { pos, rank } = getParams();
+  try {
+    const res = await fetch('dscore_rankings.json',{cache:'no-cache'});
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    const allAtPos = data.rankings[pos] || [];
+    const player = allAtPos.find(p => p.rank === rank) || allAtPos[0];
+    if (!player) throw new Error(`No player found at ${pos} rank ${rank}`);
+    document.getElementById('pageContent').innerHTML = renderPlayer(player, allAtPos);
+  } catch(e) {
+    document.getElementById('pageContent').innerHTML = `
+      <div style="background:rgba(240,96,96,0.08);border:1px solid rgba(240,96,96,0.2);border-radius:6px;padding:20px 24px;margin:40px 0;font-family:var(--mono);font-size:13px;color:var(--danger);line-height:1.7">
+        <strong>Could not load player data.</strong><br><br>
+        Make sure <code>dscore_rankings.json</code> is in the same folder as this file and open via a local server.<br><br>
+        Error: ${e.message}
+      </div>`;
+  }
+}
+
+init();
+</script>
+</body>
+</html>
