@@ -86,7 +86,8 @@
   .metric-card.frv::before  { background:var(--accent); }
   .metric-card.raw::before  { background:var(--accent); }
   .metric-card.arm::before  { background:var(--accent2); }
-  .metric-card.blk::before  { background:#b060f0; }
+  .metric-card.blk::before  { background:var(--stitch); }
+  .metric-card.cera::before { background:var(--leather); }
   .metric-card.catcher-drs::before { background:var(--warn); }
   .metric-tag { font-family:var(--mono); font-size:10px; letter-spacing:.1em; color:var(--muted); margin-bottom:8px; }
   .metric-val { font-family:var(--display); font-size:40px; line-height:1; margin-bottom:6px; }
@@ -95,7 +96,8 @@
   .metric-card.frv .metric-val { color:var(--accent); }
   .metric-card.raw .metric-val { color:var(--accent); }
   .metric-card.arm .metric-val { color:var(--accent2); }
-  .metric-card.blk .metric-val { color:#b060f0; }
+  .metric-card.blk .metric-val { color:var(--stitch); }
+  .metric-card.cera .metric-val { color:var(--leather); }
   .metric-card.catcher-drs .metric-val { color:var(--warn); }
   .metric-desc { font-size:12px; color:var(--muted); line-height:1.5; }
   .metric-bar { height:3px; background:rgba(255,255,255,0.06); border-radius:2px; margin-top:12px; overflow:hidden; }
@@ -105,7 +107,8 @@
   .frv .metric-bar-fill { background:var(--accent); }
   .raw .metric-bar-fill { background:var(--accent); }
   .arm .metric-bar-fill { background:var(--accent2); }
-  .blk .metric-bar-fill { background:#b060f0; }
+  .blk .metric-bar-fill { background:var(--stitch); }
+  .cera .metric-bar-fill { background:var(--leather); }
   .catcher-drs .metric-bar-fill { background:var(--warn); }
   /* Catcher formula breakdown */
   .c-breakdown { background:var(--surface); border:1px solid var(--border); border-radius:6px; overflow:hidden; }
@@ -295,66 +298,68 @@ function disagreementAnalysis(player) {
   }
 }
 
-function renderCatcherBreakdown(player, pctile) {
+function renderCatcherBreakdown(player) {
   const frv = player.frv || 0;
+  const arm = player.arm_runs || 0;
+  const blk = player.block_runs || 0;
+  const cera = player.cera_runs || 0;
+  const drs = player.drs || 0;
   const csPct = player.cs_pct || 0;
+  const cs = player.cs || 0;
+  const sb = player.sb || 0;
   const pb = player.pb !== undefined ? player.pb : null;
-  const sb = player.sb !== undefined ? player.sb : null;
-  const cs = player.cs !== undefined ? player.cs : null;
-  const drs = player.drs;
-  const hasDRS = drs !== 0;
-  const hasFRV = frv !== 0;
-  const hasArm = csPct > 0;
+  const wp = player.wp || 0;
 
-  const frvNorm = player.frv_norm || 50;
-  const armNorm = player.arm_norm || 50;
-  const blockNorm = player.block_norm || 50;
+  // Helper to format runs values (e.g. "+2.0 runs", "−1.5 runs")
+  const fmtRuns = v => (v >= 0 ? '+' : '') + v.toFixed(1) + ' runs';
+  // Helper to compute a bar width from a runs value (relative to ±5 runs being full)
+  const bar = v => Math.min(100, Math.max(8, 50 + (v / 5) * 50));
 
   const components = [
     {
-      cls:'frv', dot:'var(--accent)', name:'Framing (FRV)',
-      wt:'40% weight', val: hasFRV ? (frv>=0?'+':'')+frv.toFixed(1)+' FRV' : 'Pending',
-      norm: frvNorm,
-      desc: hasFRV
-        ? 'Framing Runs Value from Baseball Savant. Elite framers steal 10–20+ strikes per season.'
-        : 'Framing data not yet available for this season. Will auto-populate when published.'
+      cls:'frv', dot:'var(--accent)', name:'Framing — FRV',
+      wt:'32% weight', val: fmtRuns(frv),
+      norm: bar(frv),
+      desc:'Runs added by stealing called strikes above league average. The single biggest skill for modern catchers — pitch presentation.'
     },
     {
-      cls:'arm', dot:'var(--accent2)', name:'Arm / Throwing',
-      wt:'20% weight', val: hasArm ? csPct.toFixed(0)+'% CS rate' : '—',
-      norm: armNorm,
-      desc: hasArm
-        ? `Caught stealing ${cs !== null ? cs+' of '+(cs+(sb||0)) : ''} baserunners. League avg ~25–28%. Elite catchers exceed 35%.`
-        : 'Throwing data not yet available. CS% will be populated from Baseball Reference.'
+      cls:'arm', dot:'var(--accent2)', name:'Throwing / Arm — tFRP',
+      wt:'22% weight', val: fmtRuns(arm),
+      norm: bar(arm),
+      desc: cs > 0 || sb > 0
+        ? `Caught ${cs} of ${cs+sb} attempted base-stealers (${csPct.toFixed(0)}% rate). Throwing runs account for opportunities, not just raw counts.`
+        : 'Throwing runs prevented vs. league-average arm. Accounts for stolen base attempts allowed and runners thrown out.'
     },
     {
-      cls:'blk', dot:'#b060f0', name:'Blocking',
-      wt:'15% weight', val: pb !== null ? pb+' PB' : '—',
-      norm: blockNorm,
-      desc: pb !== null
-        ? `${pb} passed ball${pb!==1?'s':''} allowed this season. Blocking score is inverted — fewer passed balls = higher score.`
-        : 'Blocking data pending from Baseball Reference.'
+      cls:'blk', dot:'var(--stitch)', name:'Blocking — bFRP',
+      wt:'13% weight', val: fmtRuns(blk),
+      norm: bar(blk),
+      desc: `${pb !== null ? pb : 0} passed balls allowed, ${wp} wild pitches. Blocking runs measure how many runs you save by keeping the ball in front on tough pitches vs. an average catcher.`
     },
     {
-      cls:'catcher-drs', dot:'var(--warn)', name:'DRS — Defensive Runs Saved',
-      wt:'25% weight', val: hasDRS ? (drs>=0?'+':'')+drs+' DRS' : 'Pending',
-      norm: player.arm_norm ? 50 : 50, // DRS norm isn't stored separately, show bar via pctile
-      desc: hasDRS
-        ? 'Baseball Reference overall defensive runs saved. Includes framing, blocking, and throwing components.'
-        : 'DRS not yet published by Baseball Reference for this season.'
+      cls:'cera', dot:'var(--leather)', name:'Game-Calling — rCERA',
+      wt:'10% weight', val: fmtRuns(cera),
+      norm: bar(cera),
+      desc:'Catcher\'s effect on staff ERA above expectation. Captures game-calling, pitch sequencing, and pitcher management value.'
+    },
+    {
+      cls:'catcher-drs', dot:'var(--warn)', name:'Overall — DRS',
+      wt:'23% weight', val: fmtRuns(drs),
+      norm: bar(drs),
+      desc:'Total Defensive Runs Saved. Catches range, errors, double plays, and other contributions not isolated in the components above.'
     }
   ];
 
   return `
   <div class="c-breakdown">
-    <div class="c-breakdown-title">CATCHER FORMULA BREAKDOWN · FRV 40% + DRS 25% + ARM 20% + BLOCK 15%</div>
+    <div class="c-breakdown-title">CATCHER FORMULA · FRV 32% + ARM 22% + BLK 13% + CERA 10% + DRS 23%</div>
     ${components.map(c => `
     <div class="c-comp">
       <div class="c-comp-dot" style="background:${c.dot}"></div>
       <div class="c-comp-info">
         <div class="c-comp-name">${c.name}</div>
         <div class="c-comp-desc">${c.desc}</div>
-        <div class="c-comp-bar"><div class="c-comp-bar-fill ${c.cls}" style="width:${Math.min(100,Math.max(3,c.norm))}%;background:${c.dot}"></div></div>
+        <div class="c-comp-bar"><div class="c-comp-bar-fill ${c.cls}" style="width:${c.norm}%;background:${c.dot}"></div></div>
       </div>
       <div class="c-comp-right">
         <div class="c-comp-val ${c.cls}">${c.val}</div>
@@ -405,40 +410,55 @@ function renderPlayer(player, allAtPos) {
       </div>`
     : '';
 
-  // ── Metric grid: catchers get 4 special cards, others get 3 standard ──
+  // ── Metric grid: catchers get 5 runs-based cards, others get 3 standard ──
   let metricsHTML = '';
   if (isC) {
     const frv = player.frv || 0;
-    const hasFRV = frv !== 0;
+    const arm = player.arm_runs || 0;
+    const blk = player.block_runs || 0;
+    const cera = player.cera_runs || 0;
     const csPct = player.cs_pct || 0;
-    const pb = player.pb !== undefined ? player.pb : null;
     const cs = player.cs || 0;
     const sb = player.sb || 0;
+    const pb = player.pb !== undefined ? player.pb : null;
+    const fmt = v => (v >= 0 ? '+' : '') + v.toFixed(1);
+    const bar = v => Math.min(100, Math.max(8, 50 + (v / 5) * 50));
     metricsHTML = `
-    <div class="metric-grid" style="grid-template-columns:repeat(2,1fr)">
+    <div class="metric-grid" style="grid-template-columns:repeat(3,1fr)">
       <div class="metric-card frv">
-        <div class="metric-tag">FRV — FRAMING RUNS VALUE</div>
-        <div class="metric-val">${hasFRV ? (frv>=0?'+':'') + frv.toFixed(1) : '—'}</div>
-        <div class="metric-desc">Runs added by stealing called strikes above average. The single biggest component of catcher defense — worth 40% of D-Score.</div>
-        ${!hasFRV ? '<div class="pending-badge">⚠ FRAMING DATA PENDING</div>' : `<div class="metric-bar"><div class="metric-bar-fill" style="width:${Math.min(100,Math.max(5,player.frv_norm||50))}%"></div></div>`}
+        <div class="metric-tag">FRV — FRAMING RUNS</div>
+        <div class="metric-val">${fmt(frv)}</div>
+        <div class="metric-desc">Runs added by stealing called strikes above average. The single biggest skill in modern catcher defense.</div>
+        <div class="metric-bar"><div class="metric-bar-fill" style="width:${bar(frv)}%"></div></div>
       </div>
       <div class="metric-card arm">
-        <div class="metric-tag">ARM — CAUGHT STEALING</div>
-        <div class="metric-val">${csPct > 0 ? csPct.toFixed(0)+'%' : '—'}</div>
-        <div class="metric-desc">${cs} CS, ${sb} SB allowed. Caught stealing rate vs. league average (~26%). Elite catchers throw out 35%+ of baserunners.</div>
-        ${csPct > 0 ? `<div class="metric-bar"><div class="metric-bar-fill" style="width:${Math.min(100,Math.max(5,player.arm_norm||50))}%"></div></div>` : '<div class="pending-badge">⚠ ARM DATA PENDING</div>'}
+        <div class="metric-tag">ARM — THROWING RUNS</div>
+        <div class="metric-val">${fmt(arm)}</div>
+        <div class="metric-desc">${cs} CS / ${sb} SB allowed (${csPct.toFixed(0)}% rate). Runs prevented by throwing out base-stealers, not just CS%.</div>
+        <div class="metric-bar"><div class="metric-bar-fill" style="width:${bar(arm)}%"></div></div>
       </div>
       <div class="metric-card blk">
-        <div class="metric-tag">BLOCKING — PASSED BALLS</div>
-        <div class="metric-val">${pb !== null ? pb : '—'}</div>
-        <div class="metric-desc">Passed balls allowed this season. Lower is better — elite blockers keep the ball in front on short-hops and wild pitches.</div>
-        ${pb !== null ? `<div class="metric-bar"><div class="metric-bar-fill" style="width:${Math.min(100,Math.max(5,player.block_norm||50))}%"></div></div>` : '<div class="pending-badge">⚠ BLOCKING DATA PENDING</div>'}
+        <div class="metric-tag">BLK — BLOCKING RUNS</div>
+        <div class="metric-val">${fmt(blk)}</div>
+        <div class="metric-desc">${pb !== null ? pb : 0} passed balls allowed. Measures real blocking value — wild pitches kept in front of you above average.</div>
+        <div class="metric-bar"><div class="metric-bar-fill" style="width:${bar(blk)}%"></div></div>
+      </div>
+      <div class="metric-card cera">
+        <div class="metric-tag">CERA — GAME CALLING</div>
+        <div class="metric-val">${fmt(cera)}</div>
+        <div class="metric-desc">Catcher's effect on staff ERA above expectation. Pitch sequencing, game management, pitcher rapport.</div>
+        <div class="metric-bar"><div class="metric-bar-fill" style="width:${bar(cera)}%"></div></div>
       </div>
       <div class="metric-card catcher-drs">
         <div class="metric-tag">DRS — DEFENSIVE RUNS SAVED</div>
-        <div class="metric-val">${hasDRS ? (player.drs>=0?'+':'') + player.drs : '—'}</div>
-        <div class="metric-desc">Baseball Reference's overall catcher value in runs. Includes framing, blocking, and arm contributions.</div>
-        ${!hasDRS ? '<div class="pending-badge">⚠ EARLY SEASON — PENDING</div>' : ''}
+        <div class="metric-val">${hasDRS ? fmt(player.drs) : '—'}</div>
+        <div class="metric-desc">Overall catcher defensive value in runs. Captures any contribution not isolated in the components above.</div>
+        ${!hasDRS ? '<div class="pending-badge">⚠ EARLY SEASON — PENDING</div>' : `<div class="metric-bar"><div class="metric-bar-fill" style="width:${bar(player.drs)}%"></div></div>`}
+      </div>
+      <div class="metric-card frv" style="background:linear-gradient(135deg,var(--surface),var(--surface2))">
+        <div class="metric-tag">SUMMARY</div>
+        <div class="metric-val" style="font-size:32px">${(frv+arm+blk+cera).toFixed(1)}</div>
+        <div class="metric-desc"><strong>Total catcher runs prevented</strong> (FRV + ARM + BLK + CERA). DRS overlaps these so isn't summed here. Compare across catchers in runs above replacement.</div>
       </div>
     </div>`;
   } else {
@@ -471,7 +491,7 @@ function renderPlayer(player, allAtPos) {
   if (isC) {
     analysisHTML = `
     <div class="sec"><h2>Catcher component breakdown</h2><div class="line"></div></div>
-    ${renderCatcherBreakdown(player, pctile)}`;
+    ${renderCatcherBreakdown(player)}`;
   } else {
     analysisHTML = `
     <div class="sec"><h2>Metric agreement engine</h2><div class="line"></div></div>

@@ -8,8 +8,14 @@ from pybaseball import statcast_outs_above_average
 CURRENT_YEAR=datetime.now().year
 # Non-catcher weights: (OAA, DRS, FRV)
 WEIGHTS={"CF":(0.50,0.30,0.20),"LF":(0.35,0.40,0.25),"RF":(0.35,0.40,0.25),"SS":(0.45,0.35,0.20),"2B":(0.40,0.38,0.22),"3B":(0.35,0.40,0.25),"1B":(0.20,0.50,0.30),"C":(0.00,0.35,0.65)}
-# Catcher-specific weights: FRV (framing), DRS, ARM (CS%), BLOCK (inverted PB rate)
-CATCHER_WEIGHTS={"frv":0.40,"drs":0.25,"arm":0.20,"block":0.15}
+# Catcher-specific weights (applied to runs-based metrics from FanGraphs):
+# All components are in runs prevented vs. average. Weights sum to 1.0.
+#   frv         = Framing Runs Value (CFraming)         — pitch presentation, biggest skill
+#   arm_runs    = Throwing Fielding Runs Prevented (tFRP) — caught stealing + pickoffs
+#   block_runs  = Blocking Fielding Runs Prevented (bFRP) — wild pitches blocked vs avg
+#   cera_runs   = Catcher ERA Runs (rCERA)              — staff ERA management / game calling
+#   drs         = Defensive Runs Saved                   — overall, includes range/errors
+CATCHER_WEIGHTS={"frv":0.32,"arm_runs":0.22,"block_runs":0.13,"cera_runs":0.10,"drs":0.23}
 POSITIONAL_ADJ={"C":8,"SS":7,"CF":5,"2B":3,"3B":2,"RF":0,"LF":-2,"1B":-7}
 POS_LABELS={"CF":"center field","SS":"shortstop","C":"catcher","2B":"second base","3B":"third base","RF":"right field","LF":"left field","1B":"first base"}
 MLB_ID_OVERRIDES={}
@@ -43,50 +49,62 @@ def pull_mlb_ids(year):
     except Exception as e:
         print(f"    WARNING: {e}"); return dict(MLB_ID_OVERRIDES)
 
-def pull_catcher_framing(year):
-    """Pull FRV (Framing Runs Value) for catchers. Primary: FanGraphs CFraming. Fallback: pybaseball/Baseball Savant."""
-    print(f"  Pulling catcher framing (FRV) for {year}...")
-    # Primary: FanGraphs catcher fielding leaderboard (has CFraming = framing runs)
+def pull_catcher_stats(year):
+    """Pull comprehensive catcher defensive metrics from FanGraphs — all components in runs.
+    Returns: frv (framing), arm_runs (throwing), block_runs (blocking), cera_runs (game-calling),
+    fg_drs (DRS), frp (total Fielding Runs Prevented), plus raw counts (cs, sb, pb, wp)."""
+    print(f"  Pulling catcher defensive stats for {year}...")
     try:
         url=(f"https://www.fangraphs.com/api/leaders/major-league/data"
              f"?pos=c&stats=fld&lg=al,nl&qual=0&season={year}&season1={year}"
              f"&startdate=&enddate=&team=0&pageitems=500&pagenum=1&type=c")
         hdrs={"User-Agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"}
         r=requests.get(url,headers=hdrs,timeout=15)
-        rows=r.json().get("data",[])
-        if rows:
-            result=[]
-            for p in rows:
-                raw=p.get("PlayerName","") or re.sub(r"<[^>]+>","",p.get("Name","")).strip()
-                name=re.sub(r"<[^>]+>","",str(raw)).strip()
-                if not name: continue
-                frv=float(p.get("CFraming",0) or 0)
-                result.append({"player_name":to_last_first(name),"frv":round(frv,2)})
-            df=pd.DataFrame(result)
-            print(f"    Got {len(df)} catcher framing entries (FanGraphs CFraming).")
-            return df
+        rows=json.loads(r.text).get("data",[])
+        if not rows:
+            print("    WARNING: FanGraphs returned no catcher rows.")
+            return pd.DataFrame()
+        result=[]
+        for p in rows:
+            raw=p.get("PlayerName","") or re.sub(r"<[^>]+>","",p.get("Name","")).strip()
+            name=re.sub(r"<[^>]+>","",str(raw)).strip()
+            if not name: continue
+            team=re.sub(r"<[^>]+>","",str(p.get("TeamNameAbb","") or "")).strip()
+            def fnum(k,default=0):
+                v=p.get(k,default)
+                try: return float(v) if v not in(None,"") else 0.0
+                except: return 0.0
+            result.append({
+                "player_name":to_last_first(name),
+                "team":team if team and team!="- - -" else "",
+                "position":"C",
+                "innings":fnum("Inn"),
+                "games":int(fnum("G")),
+                # Runs-based defensive components (all in runs prevented vs avg)
+                "frv":round(fnum("CFraming"),2),      # Framing Runs Value
+                "arm_runs":round(fnum("tFRP"),2),      # Throwing FRP (arm/CS)
+                "block_runs":round(fnum("bFRP"),2),    # Blocking FRP (wild pitches blocked)
+                "cera_runs":round(fnum("rCERA"),2),    # Game-calling (effect on staff ERA)
+                "rsb_runs":round(fnum("rSB"),2),       # SB runs prevented (alt arm metric)
+                "drs":round(fnum("DRS"),1),            # Defensive Runs Saved
+                "frp":round(fnum("FRP"),2),            # Total Fielding Runs Prevented
+                "defense":round(fnum("Defense"),2),    # FG total defensive value
+                # Raw counts for display
+                "cs":int(fnum("CS")),
+                "sb":int(fnum("SB")),
+                "pb":int(fnum("PB")),
+                "wp":int(fnum("WP")),
+                # Filler for non-catcher fields
+                "oaa":0.0,
+            })
+        df=pd.DataFrame(result)
+        # Compute CS% from raw counts (for display only; formula uses arm_runs)
+        df["cs_pct_bref"]=(df["cs"]/(df["cs"]+df["sb"]).clip(lower=1)*100).round(1)
+        print(f"    Got {len(df)} catcher records from FanGraphs (FRV+ARM+BLK+CERA+DRS).")
+        return df
     except Exception as e:
-        print(f"    FanGraphs framing failed: {e}")
-    # Fallback: pybaseball (may be broken if Baseball Savant changed CSV format)
-    try:
-        from pybaseball import statcast_catcher_framing
-        df=statcast_catcher_framing(year,year)
-        if df is not None and not df.empty:
-            if "last_name" in df.columns and "first_name" in df.columns:
-                df["player_name"]=df["last_name"].str.strip()+", "+df["first_name"].str.strip()
-            else:
-                nc=next((c for c in df.columns if "name" in c.lower()),None)
-                if not nc: raise ValueError(f"No name col. Cols:{list(df.columns)}")
-                df["player_name"]=df[nc].apply(lambda x:to_last_first(str(x).strip()) if "," not in str(x) else str(x).strip())
-            frv_col=next((c for c in df.columns if "extra_strikes" in c.lower() or c.lower() in("frv","framing_runs","framing_run_value","cframing")),None)
-            if not frv_col: raise ValueError(f"No FRV col. Cols:{list(df.columns)}")
-            df["frv"]=pd.to_numeric(df[frv_col],errors="coerce").fillna(0)
-            result=df[["player_name","frv"]].copy()
-            print(f"    Got {len(result)} framing entries (pybaseball)."); return result
-    except Exception as e:
-        print(f"    pybaseball framing failed: {e}")
-    print("    Catcher framing unavailable — will use DRS+ARM+BLOCK formula.")
-    return pd.DataFrame(columns=["player_name","frv"])
+        print(f"    FanGraphs catcher stats failed: {e}")
+        return pd.DataFrame()
 
 def pull_oaa(year):
     print(f"  Pulling OAA for {year}...")
@@ -183,60 +201,64 @@ def compute(merged):
             runs=(float(adj.loc[idx])-50)*0.4
             if inn>0: runs=runs*min(1.0,inn/1350)
             merged.loc[idx,"dwar"]=round(runs/9.5,2)
-    # Catcher-specific formula
+    # Catcher-specific formula — uses runs-based components from FanGraphs.
+    # Each component normalized within catchers, then weighted-summed.
     c_mask=merged["position"]=="C"
     if c_mask.sum()>0:
-        has_framing=merged.loc[c_mask,"frv"].abs().sum()>0
-        has_arm=merged.loc[c_mask,"arm_val"].sum()>0
-        if has_framing and has_arm:
-            raw=(merged.loc[c_mask,"frv_norm"]*CATCHER_WEIGHTS["frv"]
-                +merged.loc[c_mask,"drs_norm"]*CATCHER_WEIGHTS["drs"]
-                +merged.loc[c_mask,"arm_norm"]*CATCHER_WEIGHTS["arm"]
-                +merged.loc[c_mask,"block_norm"]*CATCHER_WEIGHTS["block"])
-        elif has_framing:
-            raw=(merged.loc[c_mask,"frv_norm"]*0.55+merged.loc[c_mask,"drs_norm"]*0.45)
-        elif has_arm:
-            raw=(merged.loc[c_mask,"drs_norm"]*0.50
-                +merged.loc[c_mask,"arm_norm"]*0.30
-                +merged.loc[c_mask,"block_norm"]*0.20)
-        else:
-            raw=merged.loc[c_mask,"drs_norm"]*0.35+merged.loc[c_mask,"frv_norm"]*0.65
+        # Normalize each runs-based metric within catchers (0-100 scale)
+        c_norms={}
+        for k in ["frv","arm_runs","block_runs","cera_runs","drs"]:
+            if k in merged.columns:
+                series=merged.loc[c_mask,k]
+                mn,mx=series.min(),series.max()
+                c_norms[k]=pd.Series(50.0,index=series.index) if mx==mn else ((series-mn)/(mx-mn)*100).round(1)
+            else:
+                c_norms[k]=pd.Series(50.0,index=merged.loc[c_mask].index)
+        # Weighted sum of normalized components
+        raw=sum(c_norms[k]*CATCHER_WEIGHTS[k] for k in CATCHER_WEIGHTS if k in c_norms)
         adj=(raw+POSITIONAL_ADJ["C"]).clip(0,99)
         merged.loc[c_mask,"raw_dscore"]=raw.round(1)
         merged.loc[c_mask,"adj_dscore"]=adj.round(1)
+        # Compute D-WAR from total runs (FRP) directly — more accurate for catchers
+        # FRP is already in runs; D-WAR = runs / 9.5 runs-per-win
         for idx in merged[c_mask].index:
-            inn=float(merged.loc[idx,"innings"]) if "innings" in merged.columns else 0
-            runs=(float(adj.loc[idx])-50)*0.4
-            if inn>0: runs=runs*min(1.0,inn/1350)
-            merged.loc[idx,"dwar"]=round(runs/9.5,2)
+            frp=float(merged.loc[idx,"frp"]) if "frp" in merged.columns else 0
+            # If FRP not available, fall back to adj-based estimate
+            if abs(frp)<0.01:
+                inn=float(merged.loc[idx,"innings"]) if "innings" in merged.columns else 0
+                runs=(float(adj.loc[idx])-50)*0.4
+                if inn>0: runs=runs*min(1.0,inn/1350)
+                merged.loc[idx,"dwar"]=round(runs/9.5,2)
+            else:
+                merged.loc[idx,"dwar"]=round(frp/9.5,2)
     return merged
 
 def gen_desc_catcher(p,pct,total):
     name=p["player"].split(",")[0]
-    frv=p.get("frv",0); cs_pct=p.get("cs_pct",0); pb=p.get("pb",0)
+    frv=p.get("frv",0); arm=p.get("arm_runs",0); blk=p.get("block_runs",0)
+    cera=p.get("cera_runs",0); drs=p.get("drs",0); cs_pct=p.get("cs_pct",0)
     dwar=p["dwar"]; adj=p["adj_dscore"]; rank=p["rank"]
     tier="elite" if pct>=90 else "above-average" if pct>=75 else "average" if pct>=50 else "below-average"
-    if frv!=0:
-        framing_d=(f"exceptional framing (+{frv:.1f} FRV)" if frv>=12
-                  else f"elite framing (+{frv:.1f} FRV)" if frv>=6
-                  else f"above-average framing (+{frv:.1f} FRV)" if frv>=2
-                  else f"average framing ({frv:.1f} FRV)" if frv>=0
-                  else f"below-average framing ({frv:.1f} FRV)")
-        frame_str=f"The Cutoff credits him with {framing_d}"
-    else:
-        frame_str="Framing data is pending for the early 2026 season"
-    arm_str=""
+    def desc(val,label,unit="runs"):
+        if val>=4: return f"elite {label} (+{val:.1f} {unit})"
+        if val>=1.5: return f"above-average {label} (+{val:.1f} {unit})"
+        if val>=-1.5: return f"average {label} ({'+' if val>=0 else ''}{val:.1f} {unit})"
+        return f"below-average {label} ({val:.1f} {unit})"
+    parts=[f"{name} ranks #{rank} among {total} qualified catchers in 2026, posting a {tier} D-Score of {adj} — placing him in the {pct}th percentile."]
+    components=[]
+    if frv!=0: components.append(desc(frv,"framing"))
+    if arm!=0: components.append(desc(arm,"throwing"))
+    if blk!=0: components.append(desc(blk,"blocking"))
+    if cera!=0: components.append(desc(cera,"game-calling"))
+    if components:
+        parts.append("The Cutoff credits him with "+", ".join(components[:-1])+(f", and {components[-1]}" if len(components)>1 else components[-1])+".")
     if cs_pct>0:
-        arm_str=(f"His {cs_pct:.0f}% caught-stealing rate is among the best in baseball." if cs_pct>=36
-                else f"His {cs_pct:.0f}% caught-stealing rate is above league average." if cs_pct>=28
-                else f"His {cs_pct:.0f}% caught-stealing rate is near league average.")
-    war_str=(f"His {dwar}+ D-WAR ranks among the most valuable defensive catchers in baseball." if dwar>=2
-            else f"His {dwar} D-WAR represents meaningful value above replacement." if dwar>=1
-            else f"His {dwar} D-WAR sits near replacement level.")
-    parts=[f"{name} ranks #{rank} among {total} qualified catchers in 2026, posting a {tier} D-Score of {adj} — placing him in the {pct}th percentile.",
-           frame_str+"."]
-    if arm_str: parts.append(arm_str)
-    parts.append(war_str)
+        if cs_pct>=36: parts.append(f"He has thrown out {cs_pct:.0f}% of attempted base-stealers — elite arm strength.")
+        elif cs_pct>=28: parts.append(f"His {cs_pct:.0f}% caught-stealing rate is above league average.")
+        else: parts.append(f"His {cs_pct:.0f}% caught-stealing rate is near league average.")
+    if dwar>=2: parts.append(f"His {dwar}+ D-WAR ranks among the most valuable defensive catchers in baseball.")
+    elif dwar>=1: parts.append(f"His {dwar} D-WAR represents meaningful value above replacement.")
+    else: parts.append(f"His {dwar} D-WAR sits near replacement level.")
     return " ".join(parts)
 
 def gen_desc(p,pct,total,pos):
@@ -257,13 +279,15 @@ def run_pipeline(year=CURRENT_YEAR):
     time.sleep(3)
     drs_df=pull_drs(year)
     time.sleep(3)
-    framing_df=pull_catcher_framing(year)
+    catcher_df=pull_catcher_stats(year)
 
     pm={"CF":"CF","LF":"LF","RF":"RF","SS":"SS","2B":"2B","3B":"3B","1B":"1B","C":"C","C-1B":"C","MI":"SS","OF":"CF"}
     if not oaa_df.empty: oaa_df["position"]=oaa_df["position"].map(pm).fillna(oaa_df["position"])
     if not drs_df.empty: drs_df["player_name"]=drs_df["player_name"].apply(to_last_first)
-    if oaa_df.empty and drs_df.empty:
-        print("ERROR: No data from either source."); return
+    if oaa_df.empty and drs_df.empty and catcher_df.empty:
+        print("ERROR: No data from any source."); return
+
+    # ── Build non-catcher merged dataframe (OAA + DRS from BRef) ──
     if oaa_df.empty:
         merged=drs_df.copy(); merged["oaa"]=0.0
     elif drs_df.empty:
@@ -276,67 +300,44 @@ def run_pipeline(year=CURRENT_YEAR):
         for col in ["drs","innings","cs","sb","pb","cs_pct_bref"]:
             if col not in merged.columns: merged[col]=0.0
             else: merged[col]=merged[col].fillna(0)
-        # OAA does not include catchers — add them directly from DRS.
-        # BRef lists traded players once per team + a combined "2TM" row; deduplicate
-        # by keeping the row with the most innings (the combined row) per player.
-        drs_catchers=drs_df[drs_df["position"]=="C"].copy()
-        if not drs_catchers.empty:
-            # Dynamic threshold ~ Baseball Savant "qualified": 3 innings per team game.
-            # Compute team games from per-team catcher innings (excludes combined "2TM" rows).
-            team_only=drs_catchers[~drs_catchers["team"].astype(str).str.match(r"^\d+TM$",na=False)]
-            if not team_only.empty:
-                per_team_inn=team_only.groupby("team")["innings"].sum()
-                games_played=int(round((per_team_inn/9).median()))
-            else:
-                games_played=50
-            C_MIN_INN=max(30,games_played*3)
-            drs_catchers_dedup=(drs_catchers.sort_values("innings",ascending=False)
-                                .drop_duplicates(subset=["player_name"],keep="first"))
-            drs_catchers_qual=drs_catchers_dedup[drs_catchers_dedup["innings"]>=C_MIN_INN]
-            print(f"    Team games (median): {games_played} → catcher threshold: ≥{C_MIN_INN} inn (3 inn × team games)")
-            print(f"    Catcher filter: {len(drs_catchers)} BRef rows → {len(drs_catchers_dedup)} unique → {len(drs_catchers_qual)} qualified")
-            already_in=set(merged[merged["position"]=="C"]["player_name"].tolist())
-            new_catchers=drs_catchers_qual[~drs_catchers_qual["player_name"].isin(already_in)].copy()
-            if not new_catchers.empty:
-                new_catchers["oaa"]=0.0
-                for col in merged.columns:
-                    if col not in new_catchers.columns: new_catchers[col]=0.0
-                merged=pd.concat([merged,new_catchers[merged.columns]],ignore_index=True)
-                print(f"    Added {len(new_catchers)} qualified catchers from DRS.")
 
-    # Merge catcher framing (FRV)
-    merged["frv"]=0.0
-    if not framing_df.empty:
-        framing_df=framing_df.rename(columns={"frv":"frv_new"})
-        merged=pd.merge(merged,framing_df,on="player_name",how="left")
-        merged["frv"]=merged.get("frv_new",pd.Series(0.0,index=merged.index)).fillna(0)
-        if "frv_new" in merged.columns: merged=merged.drop(columns=["frv_new"])
+    # Drop any catchers that snuck in via OAA (shouldn't happen, but safety)
+    merged=merged[merged["position"]!="C"].copy()
+    # Initialize catcher-specific columns (will be 0 for non-catchers)
+    for col in ["frv","arm_runs","block_runs","cera_runs","rsb_runs","frp","defense","wp"]:
+        if col not in merged.columns: merged[col]=0.0
+
+    # ── Catcher data from FanGraphs (comprehensive, runs-based) ──
+    if not catcher_df.empty:
+        # Dynamic threshold ~ Baseball Savant "qualified": 3 innings per team game
+        per_team_inn=catcher_df.groupby("team")["innings"].sum()
+        per_team_inn=per_team_inn[per_team_inn.index!=""]  # exclude blank team
+        games_played=int(round((per_team_inn/9).median())) if not per_team_inn.empty else 50
+        C_MIN_INN=max(30,games_played*3)
+        # NOTE: FanGraphs combines traded-player rows under "2 Tms" team — keep them
+        qualified=catcher_df[catcher_df["innings"]>=C_MIN_INN].copy()
+        print(f"    Team games (median): {games_played} → catcher threshold: ≥{C_MIN_INN} inn")
+        print(f"    Catcher filter: {len(catcher_df)} FanGraphs rows → {len(qualified)} qualified")
+        # Add to merged dataframe (FanGraphs provides everything we need for catchers)
+        for col in merged.columns:
+            if col not in qualified.columns: qualified[col]=0.0 if col not in("player_name","team","position") else ""
+        merged=pd.concat([merged,qualified[merged.columns]],ignore_index=True)
+        print(f"    Added {len(qualified)} catchers from FanGraphs.")
 
     if "innings" not in merged.columns: merged["innings"]=0.0
     merged=merged[merged["position"].isin(WEIGHTS.keys())].copy()
     if merged.empty: print("ERROR: No players."); return
 
-    # Standard normalizations
+    # ── Normalizations for non-catchers ──
     merged["oaa_norm"]=normalize(merged,"oaa")
     merged["drs_norm"]=normalize(merged,"drs")
     merged["frv_norm"]=normalize(merged,"frv")
 
-    # Catcher-specific normalizations
+    # Catcher CS%, block_norm kept for backward display compatibility but unused in formula
     merged["arm_val"]=0.0
     merged["block_val"]=0.0
-    c_mask=merged["position"]=="C"
-    if c_mask.any():
-        # Use BRef's pre-computed CS% directly (e.g. 53.8 → 0.538)
-        # Fall back to computing from raw CS/SB if cs_pct_bref not available
-        if "cs_pct_bref" in merged.columns and merged.loc[c_mask,"cs_pct_bref"].sum()>0:
-            merged.loc[c_mask,"arm_val"]=(merged.loc[c_mask,"cs_pct_bref"]/100).round(4)
-        else:
-            total_sba=(merged.loc[c_mask,"cs"]+merged.loc[c_mask,"sb"]).clip(lower=1)
-            merged.loc[c_mask,"arm_val"]=(merged.loc[c_mask,"cs"]/total_sba).round(4)
-        pb_rate=merged.loc[c_mask,"pb"]/(merged.loc[c_mask,"innings"].clip(lower=1)/9)
-        merged.loc[c_mask,"block_val"]=(-pb_rate).round(4)
-    merged["arm_norm"]=normalize(merged,"arm_val")
-    merged["block_norm"]=normalize(merged,"block_val")
+    merged["arm_norm"]=50.0
+    merged["block_norm"]=50.0
 
     merged=compute(merged)
 
@@ -347,14 +348,23 @@ def run_pipeline(year=CURRENT_YEAR):
         for i,r in pos_df.iterrows():
             rank=i+1; pct=round(((total-rank+1)/total)*100)
             mid=id_map.get(to_first_last(r["player_name"]),"") or id_map.get(r["player_name"],"")
-            # Use BRef's pre-computed CS% for display (e.g. 53.8); fall back to arm_val*100
-            arm_val_pct=round(float(r.get("cs_pct_bref",0)) or float(r.get("arm_val",0))*100,1)
+            # Compute CS% from raw counts (or use FanGraphs/BRef pre-computed)
+            cs_v=float(r.get("cs",0)); sb_v=float(r.get("sb",0))
+            arm_val_pct=round(cs_v/max(cs_v+sb_v,1)*100,1) if (cs_v+sb_v)>0 else round(float(r.get("cs_pct_bref",0)),1)
             e={"rank":rank,"player":r["player_name"],"team":r.get("team",""),
                "position":pos,"mlb_id":mid,"headshot":hs_url(mid),
                "oaa":round(float(r["oaa"]),1),"drs":round(float(r["drs"]),1),
-               "frv":round(float(r.get("frv",0)),1),
+               "frv":round(float(r.get("frv",0)),2),
+               # Catcher runs-based metrics (0 for non-catchers)
+               "arm_runs":round(float(r.get("arm_runs",0)),2),
+               "block_runs":round(float(r.get("block_runs",0)),2),
+               "cera_runs":round(float(r.get("cera_runs",0)),2),
+               "rsb_runs":round(float(r.get("rsb_runs",0)),2),
+               "frp":round(float(r.get("frp",0)),2),
+               # Raw counts
                "cs_pct":arm_val_pct,"cs":int(round(float(r.get("cs",0)))),
                "sb":int(round(float(r.get("sb",0)))),"pb":int(round(float(r.get("pb",0)))),
+               "wp":int(round(float(r.get("wp",0)))),
                "arm_norm":round(float(r.get("arm_norm",50)),1),
                "block_norm":round(float(r.get("block_norm",50)),1),
                "frv_norm":round(float(r.get("frv_norm",50)),1),

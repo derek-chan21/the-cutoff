@@ -6,3 +6,4 @@ dscore-site/.claude/
 dscore-site/backfill_frv.py
 dscore-site/backfill_headshots.py
 dscore-site/_frv_page_debug.html
+.localized

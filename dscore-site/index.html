@@ -347,7 +347,6 @@ footer .inner{max-width:1200px;margin:0 auto;padding:0 28px;display:flex;justify
     </a>
     <div class="nav-links">
       <a href="index.html" class="active">Rankings</a>
-      <a href="player.html">Players</a>
       <span class="nav-badge">2026 MLB</span>
     </div>
   </div>
@@ -671,13 +670,22 @@ function renderTable(){
       +'<div class="pt">'+p.team+(showPos?' · '+p.position:'')+'</div></div></div></td>'
       +(showPos?'<td class="tpos">'+p.position+'</td>':'');
     if(isC){
-      var frv=p.frv===0?'—':(p.frv>=0?'+':'')+p.frv.toFixed(1);
-      var arm=p.cs_pct>0?p.cs_pct.toFixed(0)+'%':'—';
-      var blk=p.pb!==undefined?p.pb:'—';
+      var fmt=function(v){return v===0?'—':(v>=0?'+':'')+v.toFixed(1);};
+      var frv=fmt(p.frv||0);
+      var arm=fmt(p.arm_runs||0);
+      var blk=fmt(p.block_runs||0);
+      var cera=fmt(p.cera_runs||0);
+      var drsv=fmt(p.drs||0);
       var frvCls='tr oaa'+(sortCol==='frv'?' sorted-col':'');
-      var armCls='tr'+(p.cs_pct===0?' z':'')+(sortCol==='cs_pct'?' sorted-col':'');
-      var blkCls='tr'+(p.pb===0?' z':'')+(sortCol==='pb'?' sorted-col':'');
-      row+=('<td class="'+frvCls+'">'+frv+'</td><td class="'+armCls+'">'+arm+'</td><td class="'+blkCls+'">'+blk+'</td>');
+      var armCls='tr'+(sortCol==='arm_runs'?' sorted-col':'');
+      var blkCls='tr'+(sortCol==='block_runs'?' sorted-col':'');
+      var ceraCls='tr'+(sortCol==='cera_runs'?' sorted-col':'');
+      var drsCls='tr'+(sortCol==='drs'?' sorted-col':'');
+      row+=('<td class="'+frvCls+'">'+frv+'</td>'
+           +'<td class="'+armCls+'">'+arm+'</td>'
+           +'<td class="'+blkCls+'">'+blk+'</td>'
+           +'<td class="'+ceraCls+'">'+cera+'</td>'
+           +'<td class="'+drsCls+'">'+drsv+'</td>');
     } else {
       var oaa=(p.oaa>=0?'+':'')+p.oaa;
       var drs=p.drs===0?'—':(p.drs>=0?'+':'')+p.drs;
@@ -700,10 +708,20 @@ function renderTable(){
     +'<table><thead><tr>'
     +'<th>#</th><th>Player</th>'
     +(showPos?'<th class="r">POS</th>':'')
-    +(isC?sortTh('frv','FRV')+sortTh('cs_pct','ARM')+sortTh('pb','BLK'):sortTh('oaa','OAA')+sortTh('drs','DRS'))
+    +(isC
+      ? sortTh('frv','FRV')+sortTh('arm_runs','ARM')+sortTh('block_runs','BLK')+sortTh('cera_runs','CERA')+sortTh('drs','DRS')
+      : sortTh('oaa','OAA')+sortTh('drs','DRS'))
     +sortTh('dwar','D-WAR')+sortTh('adj_dscore','D-SCORE')+'<th></th>'
     +'</tr></thead><tbody>'+rows+'</tbody></table>'
-    +(isC?'<div style="font-family:var(--mono);font-size:9px;color:var(--muted);padding:14px 0 4px;line-height:1.8;letter-spacing:.04em">FRV = Framing Runs Value (FanGraphs) · ARM = Caught Stealing % · BLK = Passed Balls (lower is better) · Formula: FRV 40% + DRS 25% + ARM 20% + BLK 15%</div>':'');
+    +(isC?'<div style="font-family:var(--mono);font-size:9px;color:var(--muted);padding:14px 0 4px;line-height:1.7;letter-spacing:.04em">'
+      +'All catcher metrics are in <strong>runs prevented vs. average</strong> (FanGraphs).<br>'
+      +'<span style="color:var(--leather)">FRV</span> = Framing &middot; '
+      +'<span style="color:var(--leather)">ARM</span> = Throwing/CS (tFRP) &middot; '
+      +'<span style="color:var(--leather)">BLK</span> = Blocking wild pitches (bFRP) &middot; '
+      +'<span style="color:var(--leather)">CERA</span> = Game-calling effect on staff ERA &middot; '
+      +'<span style="color:var(--leather)">DRS</span> = Overall defensive runs saved<br>'
+      +'<strong>Formula:</strong> FRV 32% + ARM 22% + BLK 13% + CERA 10% + DRS 23%, normalized within catchers + positional adjustment.'
+      +'</div>':'');
 
   document.getElementById('tableContent').innerHTML=html;
   animateNumbers();
