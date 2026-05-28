@@ -170,19 +170,20 @@ def pull_drs(year):
             drs=float(drs_text) if drs_text else 0.0
             inn_td=cell("f_innings")
             innings=float(inn_td.get("csk",0))/3 if inn_td and inn_td.get("csk") else 0.0
-            # Catcher-specific columns (0 for non-catchers naturally)
+            # Catcher-specific columns — all have _catcher_only suffix in BRef HTML
             def safe_float(td):
                 if not td: return 0.0
                 t=td.get_text(strip=True)
                 try: return float(t)
                 except: return 0.0
-            cs=safe_float(cell("f_cs"))
-            sb=safe_float(cell("f_sb"))
-            pb=safe_float(cell("f_pb"))
-            rows.append({"player_name":name,"position":pos,"team":team,"drs":drs,"innings":innings,"cs":cs,"sb":sb,"pb":pb})
-        if not rows: return pd.DataFrame(columns=["player_name","position","team","drs","innings","cs","sb","pb"])
+            cs=safe_float(cell("f_cs_catcher_only"))
+            sb=safe_float(cell("f_sb_catcher_only"))
+            pb=safe_float(cell("f_pb_catcher_only"))
+            cs_pct_bref=safe_float(cell("f_cs_perc_catcher_only"))  # pre-computed CS%
+            rows.append({"player_name":name,"position":pos,"team":team,"drs":drs,"innings":innings,"cs":cs,"sb":sb,"pb":pb,"cs_pct_bref":cs_pct_bref})
+        if not rows: return pd.DataFrame(columns=["player_name","position","team","drs","innings","cs","sb","pb","cs_pct_bref"])
         df=pd.DataFrame(rows)
-        for col in ["drs","innings","cs","sb","pb"]:
+        for col in ["drs","innings","cs","sb","pb","cs_pct_bref"]:
             df[col]=pd.to_numeric(df[col],errors="coerce").fillna(0)
         print(f"    Got {len(df)} rows with DRS data."); return df
     except Exception as e:
@@ -298,12 +299,24 @@ def run_pipeline(year=CURRENT_YEAR):
         merged=oaa_df.copy()
         for col in ["drs","innings","cs","sb","pb"]: merged[col]=0.0
     else:
-        drs_cols=["player_name","position","drs","innings","cs","sb","pb"]
+        drs_cols=["player_name","position","drs","innings","cs","sb","pb","cs_pct_bref"]
         drs_cols=[c for c in drs_cols if c in drs_df.columns]
         merged=pd.merge(oaa_df,drs_df[drs_cols],on=["player_name","position"],how="left")
-        for col in ["drs","innings","cs","sb","pb"]:
+        for col in ["drs","innings","cs","sb","pb","cs_pct_bref"]:
             if col not in merged.columns: merged[col]=0.0
             else: merged[col]=merged[col].fillna(0)
+        # OAA does not include catchers — add them directly from DRS
+        drs_catchers=drs_df[drs_df["position"]=="C"].copy()
+        if not drs_catchers.empty:
+            already_in=set(merged[merged["position"]=="C"]["player_name"].tolist())
+            new_catchers=drs_catchers[~drs_catchers["player_name"].isin(already_in)].copy()
+            if not new_catchers.empty:
+                new_catchers["oaa"]=0.0
+                # Ensure all columns match merged
+                for col in merged.columns:
+                    if col not in new_catchers.columns: new_catchers[col]=0.0
+                merged=pd.concat([merged,new_catchers[merged.columns]],ignore_index=True)
+                print(f"    Added {len(new_catchers)} catchers from DRS (not in OAA).")
 
     # Merge catcher framing (FRV)
     merged["frv"]=0.0
@@ -327,8 +340,13 @@ def run_pipeline(year=CURRENT_YEAR):
     merged["block_val"]=0.0
     c_mask=merged["position"]=="C"
     if c_mask.any():
-        total_sba=(merged.loc[c_mask,"cs"]+merged.loc[c_mask,"sb"]).clip(lower=1)
-        merged.loc[c_mask,"arm_val"]=(merged.loc[c_mask,"cs"]/total_sba).round(4)
+        # Use BRef's pre-computed CS% directly (e.g. 53.8 → 0.538)
+        # Fall back to computing from raw CS/SB if cs_pct_bref not available
+        if "cs_pct_bref" in merged.columns and merged.loc[c_mask,"cs_pct_bref"].sum()>0:
+            merged.loc[c_mask,"arm_val"]=(merged.loc[c_mask,"cs_pct_bref"]/100).round(4)
+        else:
+            total_sba=(merged.loc[c_mask,"cs"]+merged.loc[c_mask,"sb"]).clip(lower=1)
+            merged.loc[c_mask,"arm_val"]=(merged.loc[c_mask,"cs"]/total_sba).round(4)
         pb_rate=merged.loc[c_mask,"pb"]/(merged.loc[c_mask,"innings"].clip(lower=1)/9)
         merged.loc[c_mask,"block_val"]=(-pb_rate).round(4)
     merged["arm_norm"]=normalize(merged,"arm_val")
@@ -343,7 +361,8 @@ def run_pipeline(year=CURRENT_YEAR):
         for i,r in pos_df.iterrows():
             rank=i+1; pct=round(((total-rank+1)/total)*100)
             mid=id_map.get(to_first_last(r["player_name"]),"") or id_map.get(r["player_name"],"")
-            arm_val_pct=round(float(r.get("arm_val",0))*100,1)
+            # Use BRef's pre-computed CS% for display (e.g. 53.8); fall back to arm_val*100
+            arm_val_pct=round(float(r.get("cs_pct_bref",0)) or float(r.get("arm_val",0))*100,1)
             e={"rank":rank,"player":r["player_name"],"team":r.get("team",""),
                "position":pos,"mlb_id":mid,"headshot":hs_url(mid),
                "oaa":round(float(r["oaa"]),1),"drs":round(float(r["drs"]),1),
