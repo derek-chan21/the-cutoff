@@ -6,23 +6,30 @@
 <title>The Cutoff — MLB Defensive Analytics</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-/* ── Warm stadium-twilight palette ─────────────────────────── */
+/* ── Stadium-twilight palette (warm, no neon) ────────────── */
 :root{
-  --bg:#0d1419;
-  --bg2:#101820;
-  --surface:#161f28;
-  --surface2:#1e2937;
-  --surface3:#27343f;
-  --border:rgba(220,200,160,0.07);
-  --border2:rgba(220,200,160,0.13);
-  --text:#ede4d3;
-  --muted:#8a7f6d;
-  --muted2:#a89e8a;
-  --accent:#a8d864;        /* field grass green */
-  --accent-soft:rgba(168,216,100,0.12);
-  --accent2:#6cb8d4;       /* stadium sky blue */
-  --leather:#d4a55a;       /* baseball leather */
-  --stitch:#c54a3f;        /* baseball seam red */
+  --bg:#1a2030;            /* deep night-sky navy */
+  --bg2:#222a3d;
+  --surface:#252e42;        /* card surface */
+  --surface2:#2e3851;
+  --surface3:#3a4561;
+  --border:rgba(220,200,160,0.08);
+  --border2:rgba(220,200,160,0.16);
+  --text:#ede4d3;           /* warm parchment */
+  --muted:#998d77;
+  --muted2:#b8ad97;
+  --leather:#d4a55a;        /* primary accent — baseball leather */
+  --leather-soft:rgba(212,165,90,0.14);
+  --stitch:#c54a3f;         /* baseball seam red */
+  --stitch-soft:rgba(197,74,63,0.12);
+  --field:#5a8a3a;          /* outfield grass */
+  --field2:#3d6b22;         /* deeper grass */
+  --dirt:#a87852;           /* infield dirt */
+  --dirt2:#7e5530;          /* shadow dirt */
+  --chalk:#f5ead0;          /* white-ish chalk */
+  --sky-top:#1a2540;        /* twilight sky top */
+  --sky-mid:#2d3a5a;        /* horizon */
+  --sky-warm:#4a4055;       /* warm twilight band */
   --warn:#e0a155;
   --danger:#c84a3f;
   --mono:'DM Mono',monospace;
@@ -32,44 +39,40 @@
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
 body{
-  background:var(--bg);
-  color:var(--text);
-  font-family:var(--body);
-  min-height:100vh;
-  overflow-x:hidden;
+  background:var(--bg);color:var(--text);font-family:var(--body);
+  min-height:100vh;overflow-x:hidden;
 }
 body::before{
   content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   background:
-    radial-gradient(ellipse 80% 60% at 50% -10%,rgba(168,216,100,0.05),transparent 50%),
-    radial-gradient(ellipse 60% 40% at 80% 100%,rgba(108,184,212,0.04),transparent 50%),
-    radial-gradient(ellipse 50% 40% at 10% 80%,rgba(212,165,90,0.03),transparent 50%);
+    radial-gradient(ellipse 60% 40% at 20% 0%,rgba(212,165,90,0.05),transparent 60%),
+    radial-gradient(ellipse 80% 40% at 80% 100%,rgba(197,74,63,0.04),transparent 60%);
 }
-.wrap{max-width:1080px;margin:0 auto;padding:0 28px;position:relative;z-index:1}
+.wrap{max-width:1200px;margin:0 auto;padding:0 28px;position:relative;z-index:1}
 
 /* ── Nav ─────────────────────────────────────────────────── */
 nav{
   border-bottom:1px solid var(--border);padding:18px 0;position:sticky;top:0;
-  background:rgba(13,20,25,0.88);backdrop-filter:blur(14px);
+  background:rgba(26,32,48,0.88);backdrop-filter:blur(14px);
   -webkit-backdrop-filter:blur(14px);z-index:100;
 }
-nav .inner{max-width:1080px;margin:0 auto;padding:0 28px;display:flex;align-items:center;justify-content:space-between}
-.nav-logo{text-decoration:none;line-height:1;display:flex;align-items:center;gap:10px}
+nav .inner{max-width:1200px;margin:0 auto;padding:0 28px;display:flex;align-items:center;justify-content:space-between}
+.nav-logo{text-decoration:none;line-height:1;display:flex;align-items:center;gap:12px}
 .nav-ball{
-  width:22px;height:22px;border-radius:50%;background:#f4ebd9;position:relative;
-  box-shadow:0 0 0 1px rgba(0,0,0,0.2),inset -3px -3px 6px rgba(0,0,0,0.1);
-  animation:slow-spin 8s linear infinite;
+  width:24px;height:24px;border-radius:50%;background:var(--chalk);position:relative;
+  box-shadow:0 0 0 1px rgba(0,0,0,0.25),inset -4px -4px 8px rgba(0,0,0,0.12);
+  animation:slow-spin 9s linear infinite;
 }
 .nav-ball::before,.nav-ball::after{
   content:'';position:absolute;border:1.5px solid var(--stitch);
-  border-radius:50%;width:80%;height:80%;top:10%;left:10%;
+  border-radius:50%;width:78%;height:78%;top:11%;left:11%;
   border-color:transparent var(--stitch);
 }
 .nav-ball::before{transform:rotate(45deg)}
 .nav-ball::after{transform:rotate(-45deg)}
 @keyframes slow-spin{to{transform:rotate(360deg)}}
 .nav-logo-text{display:flex;flex-direction:column}
-.nav-logo-main{font-family:var(--display);font-size:22px;color:var(--accent);letter-spacing:.08em}
+.nav-logo-main{font-family:var(--display);font-size:22px;color:var(--leather);letter-spacing:.08em}
 .nav-logo-sub{font-family:var(--mono);font-size:9px;color:var(--muted2);letter-spacing:.18em;margin-top:2px}
 .nav-links{display:flex;gap:26px;align-items:center}
 .nav-links a{
@@ -78,153 +81,193 @@ nav .inner{max-width:1080px;margin:0 auto;padding:0 28px;display:flex;align-item
 }
 .nav-links a::after{
   content:'';position:absolute;bottom:-2px;left:0;right:0;height:1px;
-  background:var(--accent);transform:scaleX(0);transform-origin:left;
+  background:var(--leather);transform:scaleX(0);transform-origin:left;
   transition:transform .3s ease;
 }
 .nav-links a:hover,.nav-links a.active{color:var(--text)}
 .nav-links a.active::after,.nav-links a:hover::after{transform:scaleX(1)}
 .nav-badge{
-  font-family:var(--mono);font-size:9px;color:var(--accent);
-  background:var(--accent-soft);border:1px solid rgba(168,216,100,0.22);
+  font-family:var(--mono);font-size:9px;color:var(--leather);
+  background:var(--leather-soft);border:1px solid rgba(212,165,90,0.24);
   padding:3px 8px;border-radius:3px;letter-spacing:.1em;
 }
 
-/* ── Hero ────────────────────────────────────────────────── */
-.hero{padding:64px 0 44px;border-bottom:1px solid var(--border);position:relative}
-.hero-eye{font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--muted2);margin-bottom:16px}
-.hero h1{font-family:var(--display);font-size:clamp(54px,9vw,90px);line-height:.9;margin-bottom:20px;letter-spacing:.01em}
-.hero h1 .g{color:var(--accent);position:relative;display:inline-block}
-.hero h1 .g::after{
+/* ── View transitions ────────────────────────────────────── */
+.view{
+  opacity:0;transform:scale(0.97);pointer-events:none;
+  transition:opacity .55s ease, transform .55s cubic-bezier(.5,.1,.3,1);
+  position:relative;
+}
+.view.active{opacity:1;transform:scale(1);pointer-events:auto}
+.view.zooming{
+  transform:scale(3.5);transform-origin:var(--zx,50%) var(--zy,50%);
+  opacity:0;transition:transform .8s cubic-bezier(.6,.05,.45,1),opacity .55s ease .15s;
+  pointer-events:none;
+}
+
+/* ── Field view (landing) ───────────────────────────────── */
+.field-hero{padding:42px 0 24px;text-align:center}
+.field-hero h1{
+  font-family:var(--display);font-size:clamp(44px,7vw,72px);line-height:.95;
+  letter-spacing:.02em;margin-bottom:14px;
+}
+.field-hero h1 .l{color:var(--leather);position:relative;display:inline-block}
+.field-hero h1 .l::after{
   content:'';position:absolute;left:0;bottom:6%;width:100%;height:8px;
-  background:var(--accent);opacity:.18;border-radius:2px;z-index:-1;
-  animation:swipe 1s ease-out .4s both;
+  background:var(--leather);opacity:.18;border-radius:2px;z-index:-1;
+  animation:swipe 1s ease-out .3s both;
 }
 @keyframes swipe{from{transform:scaleX(0);transform-origin:left}to{transform:scaleX(1)}}
-.hero-desc{font-size:14.5px;color:var(--muted2);line-height:1.7;max-width:560px;margin-bottom:24px}
-.pills{display:flex;gap:8px;flex-wrap:wrap}
-.pill{
-  font-family:var(--mono);font-size:10px;letter-spacing:.08em;padding:5px 11px;
-  border-radius:3px;border:1px solid;transition:transform .2s;
-}
-.pill:hover{transform:translateY(-1px)}
-.pill.live{color:var(--accent);border-color:rgba(168,216,100,0.3);background:var(--accent-soft)}
-.pill.partial{color:var(--warn);border-color:rgba(224,161,85,0.3);background:rgba(224,161,85,0.07)}
-.pill.soon{color:var(--muted2);border-color:var(--border2)}
+.field-sub{font-family:var(--mono);font-size:12px;color:var(--muted2);letter-spacing:.16em;margin-bottom:32px}
+.field-cta{font-family:var(--mono);font-size:11px;color:var(--leather);letter-spacing:.16em;margin-top:8px;animation:pulse-text 2.5s ease-in-out infinite}
+@keyframes pulse-text{0%,100%{opacity:.6}50%{opacity:1}}
 
-/* ── Baseball Diamond Position Selector ───────────────────── */
-.field-section{
-  padding:32px 0 24px;border-bottom:1px solid var(--border);
-  display:flex;gap:32px;align-items:center;flex-wrap:wrap;
+.field-container{
+  position:relative;width:100%;max-width:880px;margin:0 auto 28px;
+  aspect-ratio:1000/700;
+  border-radius:12px;overflow:hidden;
+  box-shadow:0 30px 80px rgba(0,0,0,0.5),0 0 0 1px var(--border);
+  animation:rise .6s cubic-bezier(.34,1.1,.64,1) both;
 }
-.diamond-wrap{
-  position:relative;width:300px;height:300px;flex-shrink:0;
-  animation:fade-in-up .6s ease both;
+@keyframes rise{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:translateY(0)}}
+
+.field-svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+
+/* Position markers placed absolutely over the SVG field */
+.pos-marker{
+  position:absolute;top:var(--y);left:var(--x);transform:translate(-50%,-50%);
+  width:54px;height:54px;border:none;background:none;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  z-index:5;transition:transform .35s cubic-bezier(.34,1.56,.64,1);
 }
-.diamond-bg{
-  position:absolute;inset:0;border-radius:50%;
-  background:
-    radial-gradient(circle at 50% 78%, rgba(212,165,90,0.16) 0%, rgba(212,165,90,0.08) 18%, transparent 32%),
-    radial-gradient(circle at 50% 50%, rgba(168,216,100,0.10) 30%, rgba(168,216,100,0.04) 50%, transparent 70%);
+.pos-marker:hover{transform:translate(-50%,-50%) scale(1.18);z-index:6}
+.pos-marker:focus{outline:none}
+.pos-circle{
+  width:42px;height:42px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,var(--chalk),#dccdaa 70%,#b8a888 100%);
+  box-shadow:0 0 0 2px rgba(0,0,0,0.35),0 4px 12px rgba(0,0,0,0.4),inset -3px -3px 6px rgba(0,0,0,0.18);
+  position:relative;transition:all .35s;
+}
+.pos-circle::before,.pos-circle::after{
+  content:'';position:absolute;border:1.5px solid var(--stitch);border-radius:50%;
+  width:78%;height:78%;top:11%;left:11%;border-color:transparent var(--stitch);
+  opacity:.85;
+}
+.pos-circle::before{transform:rotate(45deg)}
+.pos-circle::after{transform:rotate(-45deg)}
+.pos-marker:hover .pos-circle{
+  box-shadow:0 0 0 2px rgba(212,165,90,0.6),0 0 0 8px rgba(212,165,90,0.15),0 6px 18px rgba(0,0,0,0.5);
+}
+.pos-label{
+  font-family:var(--mono);font-size:11px;font-weight:600;color:var(--chalk);
+  letter-spacing:.08em;margin-top:6px;
+  text-shadow:0 1px 2px rgba(0,0,0,0.7),0 0 6px rgba(0,0,0,0.5);
+  transition:color .25s;
+}
+.pos-marker:hover .pos-label{color:var(--leather)}
+.pos-marker.clicked .pos-circle{
+  animation:circle-pop .5s ease;
+  box-shadow:0 0 0 3px var(--leather),0 0 0 14px rgba(212,165,90,0.2),0 0 30px rgba(212,165,90,0.5);
+}
+@keyframes circle-pop{0%{transform:scale(1)}40%{transform:scale(1.5)}100%{transform:scale(1.3)}}
+
+.field-controls{
+  text-align:center;margin-top:8px;
+  display:flex;justify-content:center;gap:14px;flex-wrap:wrap;
+}
+.all-btn{
+  font-family:var(--mono);font-size:11px;color:var(--leather);letter-spacing:.14em;
+  padding:11px 26px;border:1px solid var(--leather);border-radius:3px;
+  background:transparent;cursor:pointer;transition:all .25s;
+}
+.all-btn:hover{background:var(--leather);color:var(--bg);transform:translateY(-1px)}
+
+/* ── Rankings view ──────────────────────────────────────── */
+#rankingsView{padding:32px 0 60px}
+.back-btn{
+  font-family:var(--mono);font-size:11px;color:var(--muted2);letter-spacing:.08em;
+  background:none;border:1px solid var(--border);padding:8px 16px;border-radius:3px;
+  cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:all .25s;
+  margin-bottom:20px;
+}
+.back-btn:hover{color:var(--text);border-color:var(--border2);transform:translateX(-3px);background:var(--surface)}
+.back-ball{
+  width:14px;height:14px;border-radius:50%;background:var(--chalk);position:relative;
+  box-shadow:inset -2px -2px 4px rgba(0,0,0,0.15);
+}
+.back-ball::before{
+  content:'';position:absolute;border:1px solid var(--stitch);border-radius:50%;
+  width:75%;height:75%;top:12.5%;left:12.5%;border-color:transparent var(--stitch);
+  transform:rotate(45deg);
+}
+
+.rh-row{
+  display:flex;align-items:center;gap:24px;margin-bottom:24px;flex-wrap:wrap;
+  padding-bottom:20px;border-bottom:1px solid var(--border);
+}
+.minimap{
+  width:120px;height:84px;border-radius:6px;flex-shrink:0;overflow:hidden;
+  position:relative;background:linear-gradient(180deg,var(--sky-top),var(--sky-mid));
   border:1px solid var(--border);
 }
-/* Infield diamond lines */
-.diamond-lines{position:absolute;inset:0;pointer-events:none}
-.diamond-lines svg{width:100%;height:100%;display:block}
-.diamond-lines .basepath{stroke:rgba(212,165,90,0.4);stroke-width:1;fill:none;stroke-dasharray:3 4}
-.diamond-lines .grass{stroke:rgba(168,216,100,0.18);stroke-width:1;fill:none}
-.diamond-lines .pitcher{fill:rgba(212,165,90,0.18);stroke:rgba(212,165,90,0.35);stroke-width:1}
-/* Position buttons placed at field coordinates */
-.pos-btn{
-  position:absolute;transform:translate(-50%,-50%);
-  width:46px;height:46px;border-radius:50%;
-  border:1px solid var(--border2);background:var(--surface2);
-  color:var(--muted2);font-family:var(--mono);font-size:11px;font-weight:600;
-  cursor:pointer;transition:all .25s cubic-bezier(.34,1.56,.64,1);
-  display:flex;align-items:center;justify-content:center;
-  letter-spacing:.04em;
+.minimap svg{position:absolute;inset:0;width:100%;height:100%}
+.minimap .mm-pos{
+  fill:var(--leather);stroke:var(--bg);stroke-width:2;
+  filter:drop-shadow(0 0 6px var(--leather));
+  animation:mm-pulse 1.6s ease-in-out infinite;
 }
-.pos-btn:hover{
-  color:var(--text);border-color:var(--accent);background:var(--surface3);
-  transform:translate(-50%,-50%) scale(1.1);
-  box-shadow:0 0 0 4px rgba(168,216,100,0.08);
-}
-.pos-btn.active{
-  background:var(--accent);color:var(--bg);border-color:var(--accent);
-  font-weight:700;transform:translate(-50%,-50%) scale(1.12);
-  box-shadow:0 0 0 4px rgba(168,216,100,0.18),0 6px 18px rgba(168,216,100,0.25);
-  animation:pop .35s ease;
-}
-@keyframes pop{0%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.3)}100%{transform:translate(-50%,-50%) scale(1.12)}}
-.pos-cf{top:14%;left:50%}
-.pos-lf{top:26%;left:22%}
-.pos-rf{top:26%;left:78%}
-.pos-3b{top:54%;left:24%}
-.pos-1b{top:54%;left:76%}
-.pos-ss{top:46%;left:39%}
-.pos-2b{top:46%;left:61%}
-.pos-c{top:84%;left:50%;background:rgba(197,74,63,0.12);border-color:rgba(197,74,63,0.35);color:var(--stitch)}
-.pos-c:hover{background:rgba(197,74,63,0.2);border-color:var(--stitch)}
-.pos-c.active{background:var(--stitch);color:var(--text);border-color:var(--stitch);box-shadow:0 0 0 4px rgba(197,74,63,0.2),0 6px 18px rgba(197,74,63,0.3)}
-/* ALL button — center of field */
-.pos-all{top:65%;left:50%;width:54px;height:54px;font-size:9px;letter-spacing:.1em}
-.pos-all.active{background:var(--leather);color:var(--bg);border-color:var(--leather);box-shadow:0 0 0 4px rgba(212,165,90,0.18),0 6px 18px rgba(212,165,90,0.3)}
-
-/* Field side info */
-.field-info{flex:1;min-width:260px}
-.field-label{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.14em;margin-bottom:10px}
-.field-title{font-family:var(--display);font-size:28px;color:var(--text);letter-spacing:.02em;margin-bottom:6px;line-height:1}
-.field-hint{font-family:var(--mono);font-size:11px;color:var(--muted2);line-height:1.7;margin-bottom:16px}
-.field-team{display:flex;flex-direction:column;gap:7px;max-width:200px}
-.field-team .filter-label{font-family:var(--mono);font-size:9px;letter-spacing:.14em;color:var(--muted)}
+@keyframes mm-pulse{0%,100%{r:5}50%{r:7}}
+.rh-info{flex:1;min-width:200px}
+.rh-label{font-family:var(--mono);font-size:10px;letter-spacing:.16em;color:var(--muted);margin-bottom:4px}
+.rh-title{font-family:var(--display);font-size:38px;color:var(--text);letter-spacing:.02em;line-height:1}
+.rh-meta{font-family:var(--mono);font-size:10px;color:var(--muted2);margin-top:6px;letter-spacing:.06em}
+.rh-team{display:flex;flex-direction:column;gap:6px}
+.rh-team .filter-label{font-family:var(--mono);font-size:9px;letter-spacing:.14em;color:var(--muted)}
 .filter-select{
   -webkit-appearance:none;appearance:none;
   background:var(--surface2);border:1px solid var(--border2);color:var(--text);
-  font-family:var(--mono);font-size:11px;padding:8px 32px 8px 12px;border-radius:3px;
-  cursor:pointer;outline:none;width:100%;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23a89e8a'/%3E%3C/svg%3E");
-  background-repeat:no-repeat;background-position:right 10px center;
+  font-family:var(--mono);font-size:11px;padding:9px 34px 9px 12px;border-radius:3px;
+  cursor:pointer;outline:none;min-width:170px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23b8ad97'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 12px center;
   transition:all .2s;
 }
-.filter-select:hover{border-color:rgba(220,200,160,0.25)}
-.filter-select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.filter-select:hover{border-color:rgba(220,200,160,0.28)}
+.filter-select:focus{border-color:var(--leather);box-shadow:0 0 0 3px var(--leather-soft)}
 .filter-select option{background:var(--surface2)}
 
-/* ── Table ──────────────────────────────────────────────── */
-.twrap{padding:24px 0 40px;animation:fade-in-up .5s ease both}
-.thead-row{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:12px}
-.ttitle{font-family:var(--display);font-size:34px;letter-spacing:.02em}
-.tmeta{font-family:var(--mono);font-size:10px;color:var(--muted2);margin-top:3px;letter-spacing:.04em}
 .warn-tag{font-family:var(--mono);font-size:10px;color:var(--warn);background:rgba(224,161,85,0.08);border:1px solid rgba(224,161,85,0.22);padding:5px 11px;border-radius:3px;letter-spacing:.04em}
-.catcher-tag{font-family:var(--mono);font-size:10px;color:var(--accent);background:var(--accent-soft);border:1px solid rgba(168,216,100,0.22);padding:5px 11px;border-radius:3px;letter-spacing:.04em}
+.catcher-tag{font-family:var(--mono);font-size:10px;color:var(--leather);background:var(--leather-soft);border:1px solid rgba(212,165,90,0.24);padding:5px 11px;border-radius:3px;letter-spacing:.04em}
+
 table{width:100%;border-collapse:collapse}
 thead th{
   font-family:var(--mono);font-size:9px;letter-spacing:.13em;color:var(--muted);
-  text-align:left;padding:10px 10px;border-bottom:1px solid var(--border);font-weight:400;
+  text-align:left;padding:10px;border-bottom:1px solid var(--border);font-weight:400;
 }
 thead th.r{text-align:right}
 thead th.sortable{cursor:pointer;user-select:none;transition:color .2s;white-space:nowrap}
 thead th.sortable:hover{color:var(--text)}
-thead th.sorted{color:var(--accent)}
+thead th.sorted{color:var(--leather)}
 .sarr{font-size:8px;margin-left:3px;vertical-align:middle}
 tbody tr{
   border-bottom:1px solid var(--border);cursor:pointer;
   transition:background .2s, transform .2s;
   opacity:0;animation:row-in .5s ease forwards;
 }
-tbody tr:hover{background:rgba(255,255,255,0.025)}
-tbody tr.r1{background:rgba(168,216,100,0.04);border-left:2px solid var(--accent)}
-tbody tr.r1:hover{background:rgba(168,216,100,0.07)}
+tbody tr:hover{background:rgba(212,165,90,0.04)}
+tbody tr.r1{background:rgba(212,165,90,0.06);border-left:2px solid var(--leather)}
+tbody tr.r1:hover{background:rgba(212,165,90,0.1)}
 @keyframes row-in{from{opacity:0;transform:translateX(-12px)}to{opacity:1;transform:translateX(0)}}
 td{padding:11px 10px;vertical-align:middle;transition:color .15s}
 .rnk{font-family:var(--mono);font-size:11px;color:var(--muted);width:42px;text-align:center}
-.rnk.g{color:var(--accent);font-weight:600}
+.rnk.g{color:var(--leather);font-weight:600}
 .tplayer{display:flex;align-items:center;gap:11px}
 .hs{
   width:38px;height:38px;border-radius:50%;object-fit:cover;
   background:var(--surface2);border:1px solid var(--border);flex-shrink:0;
   transition:transform .25s, border-color .25s;
 }
-tbody tr:hover .hs{transform:scale(1.08);border-color:var(--border2)}
+tbody tr:hover .hs{transform:scale(1.08);border-color:var(--leather)}
 .hsfb{
   width:38px;height:38px;border-radius:50%;background:var(--surface2);
   border:1px solid var(--border);display:flex;align-items:center;justify-content:center;
@@ -233,29 +276,29 @@ tbody tr:hover .hs{transform:scale(1.08);border-color:var(--border2)}
 .pn{font-size:14px;font-weight:500;color:var(--text)}
 .pt{font-size:11px;color:var(--muted2);font-family:var(--mono);margin-top:1px;letter-spacing:.03em}
 .tr{text-align:right;font-family:var(--mono);font-size:12.5px;color:var(--muted2)}
-.tr.oaa{color:var(--accent2)}
+.tr.oaa{color:var(--leather)}
 .tr.z{color:rgba(255,255,255,0.13)}
 .tr.sorted-col{color:var(--text)}
 .tpos{text-align:center;font-family:var(--mono);font-size:11px;color:var(--muted2)}
 .tds{text-align:right}
 .dsn{font-family:var(--display);font-size:26px;letter-spacing:.01em;transition:color .2s}
-.dsn.e{color:var(--accent)}
-.dsn.g{color:var(--accent2)}
+.dsn.e{color:var(--leather)}
+.dsn.g{color:#c4d878}
 .dsn.a{color:var(--muted2)}
 .tdw{text-align:right;font-family:var(--display);font-size:21px}
-.tdw.p{color:var(--accent)}.tdw.n{color:var(--danger)}.tdw.z{color:var(--muted2)}
+.tdw.p{color:var(--leather)}.tdw.n{color:var(--danger)}.tdw.z{color:var(--muted2)}
 .btd{width:60px;padding-right:10px}
 .bt{height:3px;background:rgba(255,255,255,0.05);border-radius:2px;overflow:hidden}
-.bf{height:100%;border-radius:2px;background:var(--accent);transition:width .8s cubic-bezier(.34,1.2,.64,1)}
-tbody tr.r1 .bf{background:linear-gradient(90deg,var(--accent),var(--leather))}
+.bf{height:100%;border-radius:2px;background:var(--leather);transition:width .8s cubic-bezier(.34,1.2,.64,1)}
+tbody tr.r1 .bf{background:linear-gradient(90deg,var(--leather),var(--stitch))}
 .empty{text-align:center;padding:80px 0;font-family:var(--mono);font-size:12px;color:var(--muted)}
 .err{background:rgba(200,74,63,0.07);border:1px solid rgba(200,74,63,0.22);border-radius:5px;padding:22px 26px;margin:40px 0;font-family:var(--mono);font-size:12px;color:var(--danger);line-height:1.8}
 
-/* ── Baseball loader ────────────────────────────────────── */
-.loader-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 0;gap:18px}
+/* Baseball loader */
+.loader-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:120px 0;gap:18px}
 .baseball-loader{
   width:48px;height:48px;border-radius:50%;
-  background:radial-gradient(circle at 35% 35%,#fff8e6 0%,#f4ebd9 40%,#ddd0b3 100%);
+  background:radial-gradient(circle at 35% 30%,#fff8e6 0%,var(--chalk) 40%,#c8b89a 100%);
   position:relative;
   box-shadow:0 0 0 1px rgba(0,0,0,0.2),inset -4px -4px 10px rgba(0,0,0,0.12);
   animation:ball-bounce 1.4s cubic-bezier(.5,0,.5,1) infinite;
@@ -273,28 +316,22 @@ tbody tr.r1 .bf{background:linear-gradient(90deg,var(--accent),var(--leather))}
 }
 .loader-label{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.18em}
 
-/* ── Footer ─────────────────────────────────────────────── */
 footer{border-top:1px solid var(--border);padding:36px 0;margin-top:40px}
-footer .inner{max-width:1080px;margin:0 auto;padding:0 28px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}
-.flogo{font-family:var(--display);font-size:22px;color:var(--accent);letter-spacing:.08em}
+footer .inner{max-width:1200px;margin:0 auto;padding:0 28px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}
+.flogo{font-family:var(--display);font-size:22px;color:var(--leather);letter-spacing:.08em}
 .ftag{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.14em;margin-top:3px}
 .fnote{font-family:var(--mono);font-size:10px;color:var(--muted);text-align:right;line-height:1.8;letter-spacing:.04em}
 
-/* ── Shared animations ──────────────────────────────────── */
-@keyframes fade-in-up{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
-.hero{animation:fade-in-up .5s ease both}
-
-/* ── Responsive ─────────────────────────────────────────── */
 @media (max-width:680px){
-  .field-section{flex-direction:column;align-items:flex-start}
-  .diamond-wrap{margin:0 auto}
-  .field-info{width:100%}
-  .field-team{max-width:100%}
+  .field-container{max-width:100%}
+  .pos-marker{width:44px;height:44px}
+  .pos-circle{width:34px;height:34px}
+  .pos-label{font-size:10px;margin-top:4px}
+  .rh-row{flex-direction:column;align-items:flex-start}
   thead th{padding:8px 6px;font-size:8px}
   td{padding:9px 6px}
   .dsn{font-size:22px}
   .tdw{font-size:18px}
-  .hero h1{font-size:48px}
 }
 </style>
 </head>
@@ -315,161 +352,310 @@ footer .inner{max-width:1080px;margin:0 auto;padding:0 28px;display:flex;justify
     </div>
   </div>
 </nav>
-<div class="wrap">
-  <div class="hero">
-    <div class="hero-eye">THE CUTOFF — MLB DEFENSIVE ANALYTICS — 2026 SEASON</div>
-    <h1>THE <span class="g">D-SCORE</span><br>RANKINGS</h1>
-    <p class="hero-desc">Position-specific defensive ratings combining OAA, DRS, framing, and positional value into a single comparable score. The Cutoff's proprietary formula — updated daily.</p>
-    <div class="pills" id="metricPills">
-      <span class="pill live">● OAA — LIVE</span>
-      <span class="pill partial">◐ DRS — EARLY SEASON</span>
-      <span class="pill live" id="frvPill">● FRV — LIVE</span>
+
+<!-- ═══════════════════════ View 1: FIELD ═══════════════════════ -->
+<div id="fieldView" class="view active">
+  <div class="wrap">
+    <div class="field-hero">
+      <h1>STEP UP TO THE <span class="l">PLATE</span></h1>
+      <div class="field-sub">CLICK A POSITION ON THE FIELD TO SEE THE RANKINGS</div>
     </div>
+    <div class="field-container" id="fieldContainer">
+      <!-- The baseball field SVG: stadium twilight palette -->
+      <svg class="field-svg" viewBox="0 0 1000 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+        <defs>
+          <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#1a2540"/>
+            <stop offset="55%" stop-color="#2d3a5a"/>
+            <stop offset="100%" stop-color="#4a4055"/>
+          </linearGradient>
+          <radialGradient id="grass" cx="50%" cy="100%" r="120%">
+            <stop offset="0%" stop-color="#6ea848"/>
+            <stop offset="50%" stop-color="#508438"/>
+            <stop offset="100%" stop-color="#345a20"/>
+          </radialGradient>
+          <radialGradient id="dirt" cx="50%" cy="50%" r="60%">
+            <stop offset="0%" stop-color="#b88564"/>
+            <stop offset="100%" stop-color="#8a5a32"/>
+          </radialGradient>
+          <radialGradient id="mound" cx="50%" cy="40%" r="60%">
+            <stop offset="0%" stop-color="#c89476"/>
+            <stop offset="100%" stop-color="#8a5a32"/>
+          </radialGradient>
+          <linearGradient id="wallShadow" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="rgba(0,0,0,0.4)"/>
+            <stop offset="100%" stop-color="rgba(0,0,0,0)"/>
+          </linearGradient>
+          <!-- subtle grass mowing stripes -->
+          <pattern id="stripe" x="0" y="0" width="100" height="40" patternUnits="userSpaceOnUse">
+            <rect width="100" height="40" fill="transparent"/>
+            <rect width="100" height="20" fill="rgba(0,0,0,0.04)"/>
+          </pattern>
+        </defs>
+
+        <!-- Sky / stadium backdrop above outfield wall -->
+        <rect x="0" y="0" width="1000" height="130" fill="url(#sky)"/>
+        <!-- stadium-light glow specks -->
+        <circle cx="120" cy="40" r="1.5" fill="rgba(255,240,200,0.5)"/>
+        <circle cx="220" cy="55" r="1" fill="rgba(255,240,200,0.4)"/>
+        <circle cx="380" cy="35" r="1.5" fill="rgba(255,240,200,0.5)"/>
+        <circle cx="620" cy="42" r="1" fill="rgba(255,240,200,0.4)"/>
+        <circle cx="780" cy="50" r="1.5" fill="rgba(255,240,200,0.5)"/>
+        <circle cx="880" cy="38" r="1" fill="rgba(255,240,200,0.4)"/>
+
+        <!-- Outfield wall (the deep dark band) -->
+        <path d="M 30,130 Q 500,40 970,130 L 970,160 Q 500,75 30,160 Z" fill="#1a2233" stroke="rgba(0,0,0,0.4)" stroke-width="0.5"/>
+        <!-- Yellow line on wall -->
+        <path d="M 30,150 Q 500,65 970,150" fill="none" stroke="rgba(255,230,130,0.4)" stroke-width="1.5"/>
+
+        <!-- Outfield grass -->
+        <path d="M 30,155 Q 500,70 970,155 L 970,700 L 30,700 Z" fill="url(#grass)"/>
+        <path d="M 30,155 Q 500,70 970,155 L 970,700 L 30,700 Z" fill="url(#stripe)" opacity="0.6"/>
+
+        <!-- Warning track (dirt strip at the wall) -->
+        <path d="M 30,160 Q 500,80 970,160 L 970,178 Q 500,98 30,178 Z" fill="#9a6f48" opacity="0.85"/>
+
+        <!-- Foul lines (chalk lines from home plate to corners) -->
+        <line x1="500" y1="595" x2="60" y2="170" stroke="var(--chalk)" stroke-width="2.5" opacity="0.9"/>
+        <line x1="500" y1="595" x2="940" y2="170" stroke="var(--chalk)" stroke-width="2.5" opacity="0.9"/>
+
+        <!-- Infield dirt — large oval that contains the basepaths -->
+        <ellipse cx="500" cy="420" rx="280" ry="220" fill="url(#dirt)"/>
+
+        <!-- Infield grass — the diamond inside the dirt (between the bases) -->
+        <path d="M 500,295 L 645,415 L 500,540 L 355,415 Z" fill="url(#grass)" opacity="0.92"/>
+
+        <!-- Basepaths (chalk lines between bases) -->
+        <path d="M 500,595 L 645,415 L 500,238 L 355,415 Z" fill="none" stroke="var(--chalk)" stroke-width="2" opacity="0.7"/>
+        <!-- Extended baselines past 1B and 3B (foul lines on the dirt) -->
+        <line x1="645" y1="415" x2="690" y2="370" stroke="var(--chalk)" stroke-width="2" opacity="0.7"/>
+        <line x1="355" y1="415" x2="310" y2="370" stroke="var(--chalk)" stroke-width="2" opacity="0.7"/>
+
+        <!-- Pitcher's mound -->
+        <circle cx="500" cy="410" r="32" fill="url(#mound)" stroke="rgba(0,0,0,0.18)" stroke-width="1"/>
+        <!-- Pitcher's rubber -->
+        <rect x="491" y="408" width="18" height="4" fill="var(--chalk)" rx="0.5"/>
+
+        <!-- Bases (white squares rotated 45°) -->
+        <!-- 2nd base -->
+        <rect x="490" y="228" width="20" height="20" fill="var(--chalk)" transform="rotate(45 500 238)"/>
+        <!-- 3rd base -->
+        <rect x="345" y="405" width="20" height="20" fill="var(--chalk)" transform="rotate(45 355 415)"/>
+        <!-- 1st base -->
+        <rect x="635" y="405" width="20" height="20" fill="var(--chalk)" transform="rotate(45 645 415)"/>
+        <!-- Home plate (pentagon) -->
+        <polygon points="488,590 512,590 512,602 500,612 488,602" fill="var(--chalk)"/>
+
+        <!-- Batter's boxes -->
+        <rect x="458" y="588" width="20" height="22" fill="none" stroke="var(--chalk)" stroke-width="1.5" opacity="0.6"/>
+        <rect x="522" y="588" width="20" height="22" fill="none" stroke="var(--chalk)" stroke-width="1.5" opacity="0.6"/>
+
+        <!-- Catcher's box -->
+        <path d="M 478,604 L 478,628 L 522,628 L 522,604" fill="none" stroke="var(--chalk)" stroke-width="1.5" opacity="0.6"/>
+
+        <!-- Bottom field shadow gradient for depth -->
+        <rect x="0" y="600" width="1000" height="100" fill="url(#wallShadow)" opacity="0.3"/>
+      </svg>
+
+      <!-- Position markers — clickable buttons placed at field coordinates -->
+      <button class="pos-marker" data-pos="CF" style="--x:50%;--y:18%" onclick="pickPos('CF',this)"><span class="pos-circle"></span><span class="pos-label">CF</span></button>
+      <button class="pos-marker" data-pos="LF" style="--x:22%;--y:30%" onclick="pickPos('LF',this)"><span class="pos-circle"></span><span class="pos-label">LF</span></button>
+      <button class="pos-marker" data-pos="RF" style="--x:78%;--y:30%" onclick="pickPos('RF',this)"><span class="pos-circle"></span><span class="pos-label">RF</span></button>
+      <button class="pos-marker" data-pos="3B" style="--x:30%;--y:60%" onclick="pickPos('3B',this)"><span class="pos-circle"></span><span class="pos-label">3B</span></button>
+      <button class="pos-marker" data-pos="SS" style="--x:40%;--y:50%" onclick="pickPos('SS',this)"><span class="pos-circle"></span><span class="pos-label">SS</span></button>
+      <button class="pos-marker" data-pos="2B" style="--x:60%;--y:50%" onclick="pickPos('2B',this)"><span class="pos-circle"></span><span class="pos-label">2B</span></button>
+      <button class="pos-marker" data-pos="1B" style="--x:70%;--y:60%" onclick="pickPos('1B',this)"><span class="pos-circle"></span><span class="pos-label">1B</span></button>
+      <button class="pos-marker" data-pos="C"  style="--x:50%;--y:89%" onclick="pickPos('C',this)"><span class="pos-circle"></span><span class="pos-label">C</span></button>
+    </div>
+    <div class="field-controls">
+      <button class="all-btn" onclick="pickPos('ALL',null)">ALL POSITIONS</button>
+    </div>
+    <div class="field-cta">▾ HOVER A FIELDER · CLICK TO ENTER</div>
   </div>
-  <div id="mainContent">
-    <div class="loader-wrap">
-      <div class="baseball-loader"></div>
-      <div class="loader-label">LOADING DATA…</div>
+</div>
+
+<!-- ═══════════════════════ View 2: RANKINGS ═══════════════════════ -->
+<div id="rankingsView" class="view">
+  <div class="wrap">
+    <button class="back-btn" onclick="backToField()"><span class="back-ball"></span>BACK TO THE FIELD</button>
+    <div class="rh-row">
+      <div class="minimap" id="minimap"></div>
+      <div class="rh-info">
+        <div class="rh-label">VIEWING POSITION</div>
+        <div class="rh-title" id="rhTitle">—</div>
+        <div class="rh-meta" id="rhMeta">—</div>
+      </div>
+      <div class="rh-team">
+        <div class="filter-label">TEAM FILTER</div>
+        <select class="filter-select" id="teamSelect" onchange="setTeam(this.value)"></select>
+      </div>
+    </div>
+    <div id="tableContent">
+      <div class="loader-wrap"><div class="baseball-loader"></div><div class="loader-label">LOADING…</div></div>
     </div>
   </div>
 </div>
+
 <footer>
   <div class="inner">
     <div><div class="flogo">THE CUTOFF</div><div class="ftag">DEFENSIVE ANALYTICS · EST. 2026</div></div>
     <div class="fnote" id="footerMeta">Data: Baseball Savant · Baseball Reference · FanGraphs<br>D-Score © The Cutoff · Updated daily</div>
   </div>
 </footer>
+
 <script>
 var PL={CF:'Center Field',SS:'Shortstop',C:'Catcher','2B':'Second Base','3B':'Third Base',RF:'Right Field',LF:'Left Field','1B':'First Base'};
 var PO=['CF','SS','C','2B','3B','RF','LF','1B'];
+// Minimap coords (matches field-marker coords)
+var MM={CF:[50,18],LF:[22,30],RF:[78,30],'3B':[30,60],SS:[40,50],'2B':[60,50],'1B':[70,60],C:[50,89]};
 var D=null;
 var filterPos='ALL', filterTeam='ALL', sortCol='adj_dscore', sortAsc=false;
 
 function sc(s){return s>=75?'e':s>=55?'g':'a'}
 function wc(w){return w>0?'p':w<0?'n':'z'}
-function isCatcher(){return filterPos==='C';}
+function isCatcher(){return filterPos==='C'}
 
 function makeHs(url,cls,init){
   var wrap=document.createElement('span');
   if(url&&url.length>10){
     var img=document.createElement('img');
-    img.className=cls; img.src=url; img.alt='';
+    img.className=cls;img.src=url;img.alt='';
     var fb=document.createElement('div');
-    fb.className='hsfb'; fb.style.display='none'; fb.textContent=init;
+    fb.className='hsfb';fb.style.display='none';fb.textContent=init;
     img.addEventListener('error',function(){img.style.display='none';fb.style.display='flex'});
-    wrap.appendChild(img); wrap.appendChild(fb);
+    wrap.appendChild(img);wrap.appendChild(fb);
   } else {
-    var fb=document.createElement('div');
-    fb.className='hsfb'; fb.textContent=init;
-    wrap.appendChild(fb);
+    var fb=document.createElement('div');fb.className='hsfb';fb.textContent=init;wrap.appendChild(fb);
   }
   return wrap.innerHTML;
 }
 
-function getAllPlayers(){
-  var all=[];
-  PO.forEach(function(p){(D.rankings[p]||[]).forEach(function(pl){all.push(pl);});});
-  return all;
-}
-
-function getTeams(){
-  var seen={}, teams=[];
-  getAllPlayers().forEach(function(p){if(p.team&&!seen[p.team]){seen[p.team]=1;teams.push(p.team);}});
-  return teams.sort();
-}
+function getAllPlayers(){var all=[];PO.forEach(function(p){(D.rankings[p]||[]).forEach(function(pl){all.push(pl);});});return all}
+function getTeams(){var seen={},t=[];getAllPlayers().forEach(function(p){if(p.team&&!seen[p.team]){seen[p.team]=1;t.push(p.team)}});return t.sort()}
 
 function getFilteredPlayers(){
-  var list;
-  if(filterPos==='ALL'){
-    list=getAllPlayers();
-  } else {
-    list=(D.rankings[filterPos]||[]).slice();
-  }
-  if(filterTeam!=='ALL'){
-    list=list.filter(function(p){return p.team===filterTeam;});
-  }
+  var list=filterPos==='ALL'?getAllPlayers():(D.rankings[filterPos]||[]).slice();
+  if(filterTeam!=='ALL') list=list.filter(function(p){return p.team===filterTeam});
   var invertSort=(sortCol==='pb');
-  list=list.slice().sort(function(a,b){
-    var va=+(a[sortCol])||0, vb=+(b[sortCol])||0;
+  return list.slice().sort(function(a,b){
+    var va=+(a[sortCol])||0,vb=+(b[sortCol])||0;
     if(va===vb) return (b.adj_dscore||0)-(a.adj_dscore||0);
-    var asc=invertSort ? !sortAsc : sortAsc;
-    return asc ? (va-vb) : (vb-va);
+    var asc=invertSort?!sortAsc:sortAsc;
+    return asc?(va-vb):(vb-va);
   });
-  return list;
 }
 
-function setPos(p){filterPos=p;render();}
-function setTeam(t){filterTeam=t;render();}
 function setSort(col){
-  if(sortCol===col){sortAsc=!sortAsc;}
-  else{sortCol=col;sortAsc=false;}
-  render();
+  if(sortCol===col) sortAsc=!sortAsc;
+  else {sortCol=col;sortAsc=false}
+  renderTable();
 }
+function setTeam(t){filterTeam=t;renderTable()}
 
 function sortArrow(col){
   if(sortCol!==col) return '<span class="sarr" style="color:var(--muted)">⬍</span>';
   return '<span class="sarr">'+(sortAsc?'▲':'▼')+'</span>';
 }
-
-function sortTh(col,label,align){
-  var a=align||'r';
-  return '<th class="'+a+' sortable'+(sortCol===col?' sorted':'')+'" onclick="setSort(\''+col+'\')">'
-    +label+sortArrow(col)+'</th>';
+function sortTh(col,label){
+  return '<th class="r sortable'+(sortCol===col?' sorted':'')+'" onclick="setSort(\''+col+'\')">'+label+sortArrow(col)+'</th>';
 }
 
-function renderDiamond(teams){
-  // Baseball diamond layout — each position placed at its field coordinate
-  var positions=[
-    {key:'CF',cls:'pos-cf'},{key:'LF',cls:'pos-lf'},{key:'RF',cls:'pos-rf'},
-    {key:'3B',cls:'pos-3b'},{key:'SS',cls:'pos-ss'},{key:'2B',cls:'pos-2b'},
-    {key:'1B',cls:'pos-1b'},{key:'C',cls:'pos-c'}
-  ];
-  var btns=positions.map(function(p){
-    var active=filterPos===p.key?' active':'';
-    return '<button class="pos-btn '+p.cls+active+'" onclick="setPos(\''+p.key+'\')" title="'+PL[p.key]+'">'+p.key+'</button>';
-  }).join('');
-  var allActive=filterPos==='ALL'?' active':'';
-
-  // SVG diamond lines & pitcher's mound
-  var svg='<div class="diamond-lines"><svg viewBox="0 0 300 300" preserveAspectRatio="xMidYMid meet">'
-    +'<polygon class="basepath" points="150,165 215,225 150,252 85,225"/>'  // infield diamond
-    +'<circle class="grass" cx="150" cy="150" r="120"/>'                     // outfield arc
-    +'<circle class="pitcher" cx="150" cy="200" r="7"/>'                     // pitcher's mound
-    +'</svg></div>';
-
-  var teamOpts='<option value="ALL">All Teams</option>'
-    +teams.map(function(t){
-      return '<option value="'+t+'"'+(filterTeam===t?' selected':'')+'>'+t+'</option>';
-    }).join('');
-
-  var titleText=filterPos==='ALL'?'All Positions':PL[filterPos]||filterPos;
-
-  return '<div class="field-section">'
-    +'<div class="diamond-wrap">'
-      +'<div class="diamond-bg"></div>'+svg
-      +btns
-      +'<button class="pos-btn pos-all'+allActive+'" onclick="setPos(\'ALL\')" title="All positions">ALL</button>'
-    +'</div>'
-    +'<div class="field-info">'
-      +'<div class="field-label">VIEWING</div>'
-      +'<div class="field-title" id="fieldTitle">'+titleText+'</div>'
-      +'<div class="field-hint">Click a position on the diamond to filter. ALL shows everyone.</div>'
-      +'<div class="field-team">'
-        +'<div class="filter-label">TEAM FILTER</div>'
-        +'<select class="filter-select" onchange="setTeam(this.value)">'+teamOpts+'</select>'
-      +'</div>'
-    +'</div>'
-  +'</div>';
+// ── View switching with zoom transition ─────────────────
+function pickPos(pos,markerEl){
+  filterPos=pos;
+  // Animate the clicked marker
+  if(markerEl) markerEl.classList.add('clicked');
+  // Get the marker's % coords (or center for ALL)
+  var zx=50, zy=50;
+  if(pos!=='ALL' && MM[pos]){ zx=MM[pos][0]; zy=MM[pos][1]; }
+  var field=document.getElementById('fieldView');
+  // Set zoom origin to the clicked position so the field zooms toward it
+  field.style.setProperty('--zx',zx+'%');
+  field.style.setProperty('--zy',zy+'%');
+  // Trigger the zoom-out animation
+  setTimeout(function(){
+    field.classList.add('zooming');
+    field.classList.remove('active');
+  },180);
+  // After the field finishes its zoom, reveal the rankings
+  setTimeout(function(){
+    field.style.display='none';
+    var rv=document.getElementById('rankingsView');
+    rv.style.display='block';
+    // populate
+    renderHeader();
+    populateTeams();
+    renderTable();
+    // small delay for browser to apply display, then fade in
+    requestAnimationFrame(function(){rv.classList.add('active');});
+    window.scrollTo({top:0,behavior:'instant'});
+  },720);
 }
 
-function renderTable(players){
+function backToField(){
+  var rv=document.getElementById('rankingsView');
+  rv.classList.remove('active');
+  setTimeout(function(){
+    rv.style.display='none';
+    var field=document.getElementById('fieldView');
+    field.style.display='';
+    field.classList.remove('zooming');
+    // remove "clicked" state from all markers
+    document.querySelectorAll('.pos-marker.clicked').forEach(function(m){m.classList.remove('clicked')});
+    requestAnimationFrame(function(){field.classList.add('active');});
+    window.scrollTo({top:0,behavior:'instant'});
+  },450);
+}
+
+// ── Rankings header (title + minimap) ──────────────────
+function renderHeader(){
+  var titleText=filterPos==='ALL'?'All Positions':(PL[filterPos]||filterPos);
+  document.getElementById('rhTitle').textContent=titleText;
+  // Mini-map SVG: same field, with selected position highlighted
+  var mm=document.getElementById('minimap');
+  var dot='';
+  if(filterPos!=='ALL' && MM[filterPos]){
+    var c=MM[filterPos];
+    dot='<circle class="mm-pos" cx="'+c[0]+'" cy="'+c[1]+'" r="5"/>';
+  } else {
+    // For "ALL", show all 8 positions as small dots
+    dot=PO.map(function(p){var c=MM[p];return '<circle cx="'+c[0]+'" cy="'+c[1]+'" r="3" fill="var(--leather)" opacity="0.7"/>';}).join('');
+  }
+  mm.innerHTML='<svg viewBox="0 0 100 100" preserveAspectRatio="none">'
+    +'<rect x="0" y="0" width="100" height="20" fill="var(--sky-mid)"/>'
+    +'<path d="M 5,20 Q 50,8 95,20 L 95,100 L 5,100 Z" fill="var(--field2)"/>'
+    +'<line x1="50" y1="89" x2="8" y2="22" stroke="rgba(255,255,255,0.4)" stroke-width="0.4"/>'
+    +'<line x1="50" y1="89" x2="92" y2="22" stroke="rgba(255,255,255,0.4)" stroke-width="0.4"/>'
+    +'<ellipse cx="50" cy="60" rx="32" ry="26" fill="var(--dirt)"/>'
+    +'<path d="M 50,38 L 68,60 L 50,80 L 32,60 Z" fill="var(--field)" opacity="0.85"/>'
+    +'<circle cx="50" cy="60" r="3.5" fill="var(--dirt2)"/>'
+    +dot
+    +'</svg>';
+}
+
+function populateTeams(){
+  var teams=getTeams();
+  var sel=document.getElementById('teamSelect');
+  sel.innerHTML='<option value="ALL">All Teams</option>'
+    +teams.map(function(t){return '<option value="'+t+'"'+(filterTeam===t?' selected':'')+'>'+t+'</option>';}).join('');
+}
+
+// ── Render table ───────────────────────────────────────
+function renderTable(){
+  var players=getFilteredPlayers();
   var showPos=filterPos==='ALL';
   var isC=isCatcher();
-  var hasDRS=players.some(function(p){return p.drs!==0;});
-  var hasFRV=players.some(function(p){return p.frv&&p.frv!==0;});
+  var hasDRS=players.some(function(p){return p.drs!==0});
+  var hasFRV=players.some(function(p){return p.frv&&p.frv!==0});
+  var meta=players.length+' players · '
+    +({adj_dscore:'D-Score',oaa:'OAA',drs:'DRS',dwar:'D-WAR',frv:'FRV',cs_pct:'CS%',pb:'PB'}[sortCol]||sortCol)
+    +(sortAsc?' ▲':' ▼')
+    +(filterTeam!=='ALL'?' · '+filterTeam:'');
+  document.getElementById('rhMeta').textContent=meta;
 
   if(!players.length){
-    return '<div class="twrap"><div class="empty">No players match the current filters.</div></div>';
+    document.getElementById('tableContent').innerHTML='<div class="empty">No players match the current filters.</div>';
+    return;
   }
 
   var rows=players.map(function(p,i){
@@ -491,16 +677,13 @@ function renderTable(players){
       var frvCls='tr oaa'+(sortCol==='frv'?' sorted-col':'');
       var armCls='tr'+(p.cs_pct===0?' z':'')+(sortCol==='cs_pct'?' sorted-col':'');
       var blkCls='tr'+(p.pb===0?' z':'')+(sortCol==='pb'?' sorted-col':'');
-      row+=('<td class="'+frvCls+'">'+frv+'</td>'
-           +'<td class="'+armCls+'">'+arm+'</td>'
-           +'<td class="'+blkCls+'">'+blk+'</td>');
+      row+=('<td class="'+frvCls+'">'+frv+'</td><td class="'+armCls+'">'+arm+'</td><td class="'+blkCls+'">'+blk+'</td>');
     } else {
       var oaa=(p.oaa>=0?'+':'')+p.oaa;
       var drs=p.drs===0?'—':(p.drs>=0?'+':'')+p.drs;
       var oaaCls='tr oaa'+(sortCol==='oaa'?' sorted-col':'');
       var drsCls='tr'+(p.drs===0?' z':'')+(sortCol==='drs'?' sorted-col':'');
-      row+=('<td class="'+oaaCls+'">'+oaa+'</td>'
-           +'<td class="'+drsCls+'">'+drs+'</td>');
+      row+=('<td class="'+oaaCls+'">'+oaa+'</td><td class="'+drsCls+'">'+drs+'</td>');
     }
     row+=('<td class="'+dwarCls+'">'+dwar+'</td>'
          +'<td class="tds"><span class="dsn '+sc(p.adj_dscore)+'" data-target="'+p.adj_dscore+'">'+p.adj_dscore+'</span></td>'
@@ -509,42 +692,23 @@ function renderTable(players){
     return row;
   }).join('');
 
-  var titleText=filterPos==='ALL'?'All Positions':PL[filterPos]||filterPos;
-  var teamText=filterTeam==='ALL'?'':' · '+filterTeam;
-  var sortLabelMap={adj_dscore:'D-Score',oaa:'OAA',drs:'DRS',dwar:'D-WAR',frv:'FRV',cs_pct:'CS%',pb:'PB'};
-  var sortLabel=sortLabelMap[sortCol]||sortCol;
-
   var tag='';
-  if(isC){
-    tag='<span class="catcher-tag">'+(hasFRV?'● FRV + ARM + BLK + DRS':'◐ ARM + BLK + DRS · Framing pending')+'</span>';
-  } else if(!hasDRS){
-    tag='<span class="warn-tag">DRS pending early season</span>';
-  }
+  if(isC) tag='<span class="catcher-tag">'+(hasFRV?'● FRV + ARM + BLK + DRS':'◐ ARM + BLK + DRS · Framing pending')+'</span>';
+  else if(!hasDRS) tag='<span class="warn-tag">DRS pending early season</span>';
 
-  return '<div class="twrap">'
-    +'<div class="thead-row"><div>'
-    +'<div class="ttitle">'+titleText+teamText+'</div>'
-    +'<div class="tmeta">'+players.length+' players · sorted by '+sortLabel+(sortAsc?' ▲':' ▼')+' · The Cutoff D-Score</div>'
-    +'</div>'+tag
-    +'</div>'
+  var html='<div style="margin-bottom:14px">'+tag+'</div>'
     +'<table><thead><tr>'
     +'<th>#</th><th>Player</th>'
     +(showPos?'<th class="r">POS</th>':'')
-    +(isC
-      ? sortTh('frv','FRV')+sortTh('cs_pct','ARM')+sortTh('pb','BLK')
-      : sortTh('oaa','OAA')+sortTh('drs','DRS'))
-    +sortTh('dwar','D-WAR')
-    +sortTh('adj_dscore','D-SCORE')
-    +'<th></th>'
-    +'</tr></thead>'
-    +'<tbody>'+rows+'</tbody></table>'
-    +(isC?'<div style="font-family:var(--mono);font-size:9px;color:var(--muted);padding:14px 0 4px;line-height:1.8;letter-spacing:.04em">'
-      +'FRV = Framing Runs Value (FanGraphs) · ARM = Caught Stealing % · BLK = Passed Balls (lower is better) · Formula: FRV 40% + DRS 25% + ARM 20% + BLK 15%'
-      +'</div>':'')
-    +'</div>';
+    +(isC?sortTh('frv','FRV')+sortTh('cs_pct','ARM')+sortTh('pb','BLK'):sortTh('oaa','OAA')+sortTh('drs','DRS'))
+    +sortTh('dwar','D-WAR')+sortTh('adj_dscore','D-SCORE')+'<th></th>'
+    +'</tr></thead><tbody>'+rows+'</tbody></table>'
+    +(isC?'<div style="font-family:var(--mono);font-size:9px;color:var(--muted);padding:14px 0 4px;line-height:1.8;letter-spacing:.04em">FRV = Framing Runs Value (FanGraphs) · ARM = Caught Stealing % · BLK = Passed Balls (lower is better) · Formula: FRV 40% + DRS 25% + ARM 20% + BLK 15%</div>':'');
+
+  document.getElementById('tableContent').innerHTML=html;
+  animateNumbers();
 }
 
-// After render, animate D-Score numbers from 0 → target and bar widths from 0 → pct
 function animateNumbers(){
   document.querySelectorAll('.dsn[data-target]').forEach(function(el,i){
     var target=parseFloat(el.getAttribute('data-target'))||0;
@@ -566,13 +730,6 @@ function animateNumbers(){
   });
 }
 
-function render(){
-  var teams=getTeams();
-  var players=getFilteredPlayers();
-  document.getElementById('mainContent').innerHTML=renderDiamond(teams)+renderTable(players);
-  animateNumbers();
-}
-
 async function init(){
   try{
     var r=await fetch('dscore_rankings.json',{cache:'no-cache'});
@@ -582,10 +739,8 @@ async function init(){
       var d=new Date(D.meta.generated_at);
       document.getElementById('footerMeta').innerHTML='Data: Baseball Savant · Baseball Reference · FanGraphs<br>© The Cutoff · Updated '+d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
     }
-    // Small artificial loader delay so the baseball animation is visible (perceived polish)
-    setTimeout(render, 400);
   }catch(e){
-    document.getElementById('mainContent').innerHTML='<div class="err"><strong>Could not load data.</strong><br>Error: '+e.message+'</div>';
+    document.getElementById('tableContent').innerHTML='<div class="err"><strong>Could not load data.</strong><br>Error: '+e.message+'</div>';
   }
 }
 init();
