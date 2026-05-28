@@ -279,13 +279,22 @@ def run_pipeline(year=CURRENT_YEAR):
         # OAA does not include catchers — add them directly from DRS.
         # BRef lists traded players once per team + a combined "2TM" row; deduplicate
         # by keeping the row with the most innings (the combined row) per player.
-        C_MIN_INN=100  # ~11 games as starting catcher; removes tiny-sample backups
         drs_catchers=drs_df[drs_df["position"]=="C"].copy()
         if not drs_catchers.empty:
+            # Dynamic threshold ~ Baseball Savant "qualified": 3 innings per team game.
+            # Compute team games from per-team catcher innings (excludes combined "2TM" rows).
+            team_only=drs_catchers[~drs_catchers["team"].astype(str).str.match(r"^\d+TM$",na=False)]
+            if not team_only.empty:
+                per_team_inn=team_only.groupby("team")["innings"].sum()
+                games_played=int(round((per_team_inn/9).median()))
+            else:
+                games_played=50
+            C_MIN_INN=max(30,games_played*3)
             drs_catchers_dedup=(drs_catchers.sort_values("innings",ascending=False)
                                 .drop_duplicates(subset=["player_name"],keep="first"))
             drs_catchers_qual=drs_catchers_dedup[drs_catchers_dedup["innings"]>=C_MIN_INN]
-            print(f"    Catcher filter: {len(drs_catchers)} BRef rows → {len(drs_catchers_dedup)} unique → {len(drs_catchers_qual)} with ≥{C_MIN_INN} inn")
+            print(f"    Team games (median): {games_played} → catcher threshold: ≥{C_MIN_INN} inn (3 inn × team games)")
+            print(f"    Catcher filter: {len(drs_catchers)} BRef rows → {len(drs_catchers_dedup)} unique → {len(drs_catchers_qual)} qualified")
             already_in=set(merged[merged["position"]=="C"]["player_name"].tolist())
             new_catchers=drs_catchers_qual[~drs_catchers_qual["player_name"].isin(already_in)].copy()
             if not new_catchers.empty:
