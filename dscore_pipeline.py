@@ -44,9 +44,30 @@ def pull_mlb_ids(year):
         print(f"    WARNING: {e}"); return dict(MLB_ID_OVERRIDES)
 
 def pull_catcher_framing(year):
-    """Pull FRV (Framing Runs Value) for catchers from Baseball Savant via pybaseball or direct scrape."""
+    """Pull FRV (Framing Runs Value) for catchers. Primary: FanGraphs CFraming. Fallback: pybaseball/Baseball Savant."""
     print(f"  Pulling catcher framing (FRV) for {year}...")
-    # Try pybaseball first
+    # Primary: FanGraphs catcher fielding leaderboard (has CFraming = framing runs)
+    try:
+        url=(f"https://www.fangraphs.com/api/leaders/major-league/data"
+             f"?pos=c&stats=fld&lg=al,nl&qual=0&season={year}&season1={year}"
+             f"&startdate=&enddate=&team=0&pageitems=500&pagenum=1&type=c")
+        hdrs={"User-Agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"}
+        r=requests.get(url,headers=hdrs,timeout=15)
+        rows=r.json().get("data",[])
+        if rows:
+            result=[]
+            for p in rows:
+                raw=p.get("PlayerName","") or re.sub(r"<[^>]+>","",p.get("Name","")).strip()
+                name=re.sub(r"<[^>]+>","",str(raw)).strip()
+                if not name: continue
+                frv=float(p.get("CFraming",0) or 0)
+                result.append({"player_name":to_last_first(name),"frv":round(frv,2)})
+            df=pd.DataFrame(result)
+            print(f"    Got {len(df)} catcher framing entries (FanGraphs CFraming).")
+            return df
+    except Exception as e:
+        print(f"    FanGraphs framing failed: {e}")
+    # Fallback: pybaseball (may be broken if Baseball Savant changed CSV format)
     try:
         from pybaseball import statcast_catcher_framing
         df=statcast_catcher_framing(year,year)
@@ -57,64 +78,14 @@ def pull_catcher_framing(year):
                 nc=next((c for c in df.columns if "name" in c.lower()),None)
                 if not nc: raise ValueError(f"No name col. Cols:{list(df.columns)}")
                 df["player_name"]=df[nc].apply(lambda x:to_last_first(str(x).strip()) if "," not in str(x) else str(x).strip())
-            frv_col=next((c for c in df.columns if "extra_strikes" in c.lower() or c.lower() in("frv","framing_runs","framing_run_value")),None)
+            frv_col=next((c for c in df.columns if "extra_strikes" in c.lower() or c.lower() in("frv","framing_runs","framing_run_value","cframing")),None)
             if not frv_col: raise ValueError(f"No FRV col. Cols:{list(df.columns)}")
             df["frv"]=pd.to_numeric(df[frv_col],errors="coerce").fillna(0)
             result=df[["player_name","frv"]].copy()
             print(f"    Got {len(result)} framing entries (pybaseball)."); return result
-    except ImportError:
-        print("    pybaseball statcast_catcher_framing not found, trying direct scrape.")
     except Exception as e:
         print(f"    pybaseball framing failed: {e}")
-    # Fallback: scrape Baseball Savant catcher framing page
-    try:
-        url=f"https://baseballsavant.mlb.com/catcher_framing?year={year}&team=&min=q&sort=4,1"
-        hdrs={"User-Agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
-        r=requests.get(url,headers=hdrs,timeout=20)
-        soup=BeautifulSoup(r.content,"html.parser")
-        for script in soup.find_all("script"):
-            text=script.string or ""
-            if "runs_extra_strikes" not in text: continue
-            m=re.search(r'(\[\s*\{[^<]{50,}\}])',text,re.DOTALL)
-            if not m: continue
-            try:
-                data=json.loads(m.group(1))
-                rows=[]
-                for item in data:
-                    if not isinstance(item,dict) or "runs_extra_strikes" not in item: continue
-                    last=str(item.get("last_name","")).strip()
-                    first=str(item.get("first_name","")).strip()
-                    if not last: continue
-                    name=f"{last}, {first}" if first else last
-                    frv=float(item.get("runs_extra_strikes",0))
-                    rows.append({"player_name":name,"frv":frv})
-                if rows:
-                    df=pd.DataFrame(rows)
-                    print(f"    Got {len(df)} framing entries (savant JSON)."); return df
-            except Exception: pass
-        table=soup.find("table")
-        if table:
-            rows=[]
-            for tr in table.find("tbody").find_all("tr"):
-                tds=tr.find_all(["td","th"])
-                if len(tds)<5: continue
-                name_td=tr.find(attrs={"data-col":"player_name"}) or (tds[1] if len(tds)>1 else None)
-                if not name_td: continue
-                name=name_td.get_text(strip=True)
-                if not name: continue
-                frv_td=tr.find(attrs={"data-col":"runs_extra_strikes"})
-                if frv_td:
-                    try:
-                        frv=float(frv_td.get_text(strip=True))
-                        rows.append({"player_name":to_last_first(name),"frv":frv})
-                    except: pass
-            if rows:
-                df=pd.DataFrame(rows)
-                print(f"    Got {len(df)} framing entries (savant HTML)."); return df
-        print("    WARNING: Could not parse Baseball Savant framing page.")
-    except Exception as e:
-        print(f"    WARNING (savant scrape): {e}")
-    print("    Catcher framing unavailable — will use DRS-only for catchers.")
+    print("    Catcher framing unavailable — will use DRS+ARM+BLOCK formula.")
     return pd.DataFrame(columns=["player_name","frv"])
 
 def pull_oaa(year):
@@ -305,18 +276,24 @@ def run_pipeline(year=CURRENT_YEAR):
         for col in ["drs","innings","cs","sb","pb","cs_pct_bref"]:
             if col not in merged.columns: merged[col]=0.0
             else: merged[col]=merged[col].fillna(0)
-        # OAA does not include catchers — add them directly from DRS
+        # OAA does not include catchers — add them directly from DRS.
+        # BRef lists traded players once per team + a combined "2TM" row; deduplicate
+        # by keeping the row with the most innings (the combined row) per player.
+        C_MIN_INN=100  # ~11 games as starting catcher; removes tiny-sample backups
         drs_catchers=drs_df[drs_df["position"]=="C"].copy()
         if not drs_catchers.empty:
+            drs_catchers_dedup=(drs_catchers.sort_values("innings",ascending=False)
+                                .drop_duplicates(subset=["player_name"],keep="first"))
+            drs_catchers_qual=drs_catchers_dedup[drs_catchers_dedup["innings"]>=C_MIN_INN]
+            print(f"    Catcher filter: {len(drs_catchers)} BRef rows → {len(drs_catchers_dedup)} unique → {len(drs_catchers_qual)} with ≥{C_MIN_INN} inn")
             already_in=set(merged[merged["position"]=="C"]["player_name"].tolist())
-            new_catchers=drs_catchers[~drs_catchers["player_name"].isin(already_in)].copy()
+            new_catchers=drs_catchers_qual[~drs_catchers_qual["player_name"].isin(already_in)].copy()
             if not new_catchers.empty:
                 new_catchers["oaa"]=0.0
-                # Ensure all columns match merged
                 for col in merged.columns:
                     if col not in new_catchers.columns: new_catchers[col]=0.0
                 merged=pd.concat([merged,new_catchers[merged.columns]],ignore_index=True)
-                print(f"    Added {len(new_catchers)} catchers from DRS (not in OAA).")
+                print(f"    Added {len(new_catchers)} qualified catchers from DRS.")
 
     # Merge catcher framing (FRV)
     merged["frv"]=0.0
