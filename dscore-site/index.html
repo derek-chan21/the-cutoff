@@ -688,10 +688,15 @@ function renderTable(){
            +'<td class="'+drsCls+'">'+drsv+'</td>');
     } else {
       var oaa=(p.oaa>=0?'+':'')+p.oaa;
+      var armRuns=p.arm_runs||0;
+      var arm=armRuns===0?'—':(armRuns>=0?'+':'')+armRuns.toFixed(1);
       var drs=p.drs===0?'—':(p.drs>=0?'+':'')+p.drs;
       var oaaCls='tr oaa'+(sortCol==='oaa'?' sorted-col':'');
+      var armCls='tr'+(armRuns===0?' z':'')+(sortCol==='arm_runs'?' sorted-col':'');
       var drsCls='tr'+(p.drs===0?' z':'')+(sortCol==='drs'?' sorted-col':'');
-      row+=('<td class="'+oaaCls+'">'+oaa+'</td><td class="'+drsCls+'">'+drs+'</td>');
+      row+=('<td class="'+oaaCls+'">'+oaa+'</td>'
+           +'<td class="'+armCls+'">'+arm+'</td>'
+           +'<td class="'+drsCls+'">'+drs+'</td>');
     }
     row+=('<td class="'+dwarCls+'">'+dwar+'</td>'
          +'<td class="tds"><span class="dsn '+sc(p.adj_dscore)+'" data-target="'+p.adj_dscore+'">'+p.adj_dscore+'</span></td>'
@@ -710,7 +715,7 @@ function renderTable(){
     +(showPos?'<th class="r">POS</th>':'')
     +(isC
       ? sortTh('frv','FRV')+sortTh('arm_runs','ARM')+sortTh('block_runs','BLK')+sortTh('cera_runs','CERA')+sortTh('drs','DRS')
-      : sortTh('oaa','OAA')+sortTh('drs','DRS'))
+      : sortTh('oaa','OAA')+sortTh('arm_runs','ARM')+sortTh('drs','DRS'))
     +sortTh('dwar','D-WAR')+sortTh('adj_dscore','D-SCORE')+'<th></th>'
     +'</tr></thead><tbody>'+rows+'</tbody></table>'
     +(isC?'<div style="font-family:var(--mono);font-size:9px;color:var(--muted);padding:14px 0 4px;line-height:1.7;letter-spacing:.04em">'

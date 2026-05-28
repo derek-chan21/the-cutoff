@@ -248,10 +248,15 @@ const POS_ADJ_TEXT = {
   '1B': 'First base is primarily an offensive position. Defensive skill matters for scooping throws and footwork, but the position is far less demanding than up-the-middle spots.',
 };
 
+// Position-aware weights — components: OAA (range), ARM, DP, DRS — sum to 1.0
 const WEIGHTS = {
-  CF:[0.50,0.30,0.20], LF:[0.35,0.40,0.25], RF:[0.35,0.40,0.25],
-  SS:[0.45,0.35,0.20], '2B':[0.40,0.38,0.22], '3B':[0.35,0.40,0.25],
-  '1B':[0.20,0.50,0.30], C:[0.00,0.35,0.65],
+  CF: {oaa:0.55, arm:0.10, dp:0.00, drs:0.35},
+  LF: {oaa:0.35, arm:0.15, dp:0.00, drs:0.50},
+  RF: {oaa:0.35, arm:0.25, dp:0.00, drs:0.40},
+  SS: {oaa:0.45, arm:0.15, dp:0.10, drs:0.30},
+  '2B':{oaa:0.40, arm:0.05, dp:0.20, drs:0.35},
+  '3B':{oaa:0.40, arm:0.20, dp:0.05, drs:0.35},
+  '1B':{oaa:0.25, arm:0.05, dp:0.05, drs:0.65},
 };
 
 function getParams() {
@@ -374,7 +379,7 @@ function renderPlayer(player, allAtPos) {
   const isC = pos === 'C';
   const adj = POS_ADJ[pos] || 0;
   const adjStr = adj >= 0 ? `+${adj}` : `${adj}`;
-  const [wOAA, wDRS] = WEIGHTS[pos] || [0.4, 0.35, 0.25];
+  const posWeights = WEIGHTS[pos] || {oaa:0.4, arm:0.15, dp:0.05, drs:0.40};
   const hasDRS = player.drs !== 0;
   const dis = disagreementAnalysis(player);
 
@@ -462,26 +467,43 @@ function renderPlayer(player, allAtPos) {
       </div>
     </div>`;
   } else {
+    // Non-catcher position cards: OAA (range), ARM (rARM), DP (rGDP), DRS (overall)
+    const armRuns = player.arm_runs || 0;
+    const dpRuns = player.dp_runs || 0;
+    const fmt = v => (v >= 0 ? '+' : '') + v.toFixed(1);
+    const bar = v => Math.min(100, Math.max(8, 50 + (v / 5) * 50));
+    const isInfield = ['SS','2B','3B','1B'].includes(pos);
+    const armDesc = ['CF','LF','RF'].includes(pos)
+      ? 'Arm runs prevented vs. average. Strong arms hold runners and prevent extra-base advancement.'
+      : pos==='3B'||pos==='SS' ? 'Arm runs from throws across the diamond. Critical for SS and 3B.'
+      : 'Arm value — runs prevented by accurate, strong throws.';
     metricsHTML = `
-    <div class="metric-grid">
+    <div class="metric-grid" style="grid-template-columns:repeat(${isInfield?4:3},1fr)">
       <div class="metric-card oaa">
-        <div class="metric-tag">OAA — OUTS ABOVE AVG</div>
+        <div class="metric-tag">OAA — RANGE</div>
         <div class="metric-val">${player.oaa >= 0 ? '+' : ''}${player.oaa}</div>
-        <div class="metric-desc">Range-based. How many outs saved vs. average on identical chances at ${pos}.</div>
+        <div class="metric-desc">Outs Above Average (Statcast). How many outs saved vs. league average on the same chances at ${pos}.</div>
         <div class="metric-bar"><div class="metric-bar-fill" style="width:${Math.min(100,Math.max(5,pctile))}%"></div></div>
         <div style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:6px">${pctile}th percentile at ${pos}</div>
       </div>
-      <div class="metric-card drs">
-        <div class="metric-tag">DRS — DEFENSIVE RUNS SAVED</div>
-        <div class="metric-val">${hasDRS ? (player.drs >= 0 ? '+' : '') + player.drs : '—'}</div>
-        <div class="metric-desc">Outcome-based. Full defensive contribution in runs — range, arm, positioning.</div>
-        ${!hasDRS ? '<div class="pending-badge">⚠ EARLY SEASON — NOT YET PUBLISHED</div>' : ''}
+      <div class="metric-card arm">
+        <div class="metric-tag">ARM — THROWING RUNS</div>
+        <div class="metric-val">${fmt(armRuns)}</div>
+        <div class="metric-desc">${armDesc}</div>
+        <div class="metric-bar"><div class="metric-bar-fill" style="width:${bar(armRuns)}%"></div></div>
       </div>
-      <div class="metric-card frv">
-        <div class="metric-tag">FRV — FIELDING RUN VALUE</div>
-        <div class="metric-val">${player.frv !== undefined && player.frv !== 0 ? (player.frv >= 0 ? '+' : '') + player.frv.toFixed(1) : '—'}</div>
-        <div class="metric-desc">Statcast's all-in-one defensive run estimate. Range, throws — combined.</div>
-        ${(player.frv === undefined || player.frv === 0) ? '<div class="pending-badge">⚠ NOT YET LOADED</div>' : ''}
+      ${isInfield ? `
+      <div class="metric-card blk">
+        <div class="metric-tag">DP — DOUBLE PLAY RUNS</div>
+        <div class="metric-val">${fmt(dpRuns)}</div>
+        <div class="metric-desc">Double play runs prevented. Measures DP turn ability vs. league average — especially important for SS and 2B.</div>
+        <div class="metric-bar"><div class="metric-bar-fill" style="width:${bar(dpRuns)}%"></div></div>
+      </div>` : ''}
+      <div class="metric-card drs">
+        <div class="metric-tag">DRS — TOTAL RUNS SAVED</div>
+        <div class="metric-val">${hasDRS ? (player.drs >= 0 ? '+' : '') + player.drs : '—'}</div>
+        <div class="metric-desc">Defensive Runs Saved. Captures everything — range, arm, errors, positioning — in one composite runs value.</div>
+        ${!hasDRS ? '<div class="pending-badge">⚠ EARLY SEASON</div>' : `<div class="metric-bar"><div class="metric-bar-fill" style="width:${bar(player.drs)}%"></div></div>`}
       </div>
     </div>`;
   }
@@ -519,7 +541,11 @@ function renderPlayer(player, allAtPos) {
       cols = `<td class="r">${frvStr}</td><td class="r" style="color:var(--muted)">${armStr}</td>`;
     } else {
       const drsStr = p.drs === 0 ? '—' : (p.drs >= 0 ? '+' : '') + p.drs;
-      cols = `<td class="r">${p.oaa >= 0 ? '+' : ''}${p.oaa}</td><td class="r" style="color:var(--muted)">${drsStr}</td>`;
+      const armR = p.arm_runs || 0;
+      const armStr = armR === 0 ? '—' : (armR >= 0 ? '+' : '') + armR.toFixed(1);
+      cols = `<td class="r">${p.oaa >= 0 ? '+' : ''}${p.oaa}</td>`
+           + `<td class="r" style="color:var(--muted)">${armStr}</td>`
+           + `<td class="r" style="color:var(--muted)">${drsStr}</td>`;
     }
     return `<tr class="${p.rank === player.rank ? 'me' : ''}" onclick="window.location='player.html?pos=${p.position}&rank=${p.rank}'" style="cursor:pointer">
       <td><span class="rank-badge ${p.rank===1||p.rank===player.rank?'top':''}">#${p.rank}</span></td>
@@ -571,7 +597,7 @@ function renderPlayer(player, allAtPos) {
   <table class="ctx-table">
     <thead><tr>
       <th>Rank</th><th>Player</th><th>Team</th>
-      ${isC ? '<th class="r">FRV</th><th class="r">ARM</th>' : '<th class="r">OAA</th><th class="r">DRS</th>'}
+      ${isC ? '<th class="r">FRV</th><th class="r">ARM</th>' : '<th class="r">OAA</th><th class="r">ARM</th><th class="r">DRS</th>'}
       <th class="r">Adj. D-Score</th>
     </tr></thead>
     <tbody>${ctxRows}</tbody>

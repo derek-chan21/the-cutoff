@@ -6,16 +6,35 @@ from datetime import datetime
 from pybaseball import statcast_outs_above_average
 
 CURRENT_YEAR=datetime.now().year
-# Non-catcher weights: (OAA, DRS, FRV)
-WEIGHTS={"CF":(0.50,0.30,0.20),"LF":(0.35,0.40,0.25),"RF":(0.35,0.40,0.25),"SS":(0.45,0.35,0.20),"2B":(0.40,0.38,0.22),"3B":(0.35,0.40,0.25),"1B":(0.20,0.50,0.30),"C":(0.00,0.35,0.65)}
-# Catcher-specific weights (applied to runs-based metrics from FanGraphs):
-# All components are in runs prevented vs. average. Weights sum to 1.0.
-#   frv         = Framing Runs Value (CFraming)         — pitch presentation, biggest skill
-#   arm_runs    = Throwing Fielding Runs Prevented (tFRP) — caught stealing + pickoffs
-#   block_runs  = Blocking Fielding Runs Prevented (bFRP) — wild pitches blocked vs avg
-#   cera_runs   = Catcher ERA Runs (rCERA)              — staff ERA management / game calling
-#   drs         = Defensive Runs Saved                   — overall, includes range/errors
+# ─────────────────────────────────────────────────────────────────────────────
+# Position-aware D-Score weights — every position uses runs-based components
+# from FanGraphs (DRS subcomponents) + Statcast OAA for range.
+#
+# Non-catcher components (all in runs prevented vs. average):
+#   oaa       = Outs Above Average (Statcast)            — range
+#   arm_runs  = Arm runs (rARM from DRS)                  — throwing strength/accuracy
+#   dp_runs   = Double Play runs (rGDP from DRS)          — DP turn ability
+#   drs       = Defensive Runs Saved (overall, BRef)      — catches errors/positioning
+#
+# Catcher components (all in runs prevented vs. average):
+#   frv         = Framing Runs (CFraming)                 — pitch presentation
+#   arm_runs    = Throwing FRP (tFRP)                     — caught stealing + pickoffs
+#   block_runs  = Blocking FRP (bFRP)                     — wild pitches blocked
+#   cera_runs   = Catcher ERA Runs (rCERA)                — game-calling
+#   drs         = Defensive Runs Saved (overall)
+# ─────────────────────────────────────────────────────────────────────────────
+NON_CATCHER_WEIGHTS={
+    "CF": {"oaa":0.55,"arm_runs":0.10,"dp_runs":0.00,"drs":0.35},  # all about range
+    "LF": {"oaa":0.35,"arm_runs":0.15,"dp_runs":0.00,"drs":0.50},  # easier corner
+    "RF": {"oaa":0.35,"arm_runs":0.25,"dp_runs":0.00,"drs":0.40},  # arm matters most
+    "SS": {"oaa":0.45,"arm_runs":0.15,"dp_runs":0.10,"drs":0.30},  # range + arm + DP
+    "2B": {"oaa":0.40,"arm_runs":0.05,"dp_runs":0.20,"drs":0.35},  # DP turn is key
+    "3B": {"oaa":0.40,"arm_runs":0.20,"dp_runs":0.05,"drs":0.35},  # long throw, hot corner
+    "1B": {"oaa":0.25,"arm_runs":0.05,"dp_runs":0.05,"drs":0.65},  # mostly errors/scoops
+}
 CATCHER_WEIGHTS={"frv":0.32,"arm_runs":0.22,"block_runs":0.13,"cera_runs":0.10,"drs":0.23}
+# Backward-compat: list of positions we rank
+WEIGHTS={k:None for k in list(NON_CATCHER_WEIGHTS.keys())+["C"]}
 POSITIONAL_ADJ={"C":8,"SS":7,"CF":5,"2B":3,"3B":2,"RF":0,"LF":-2,"1B":-7}
 POS_LABELS={"CF":"center field","SS":"shortstop","C":"catcher","2B":"second base","3B":"third base","RF":"right field","LF":"left field","1B":"first base"}
 MLB_ID_OVERRIDES={}
@@ -48,6 +67,49 @@ def pull_mlb_ids(year):
         print(f"    Got {len(id_map)} player IDs."); return id_map
     except Exception as e:
         print(f"    WARNING: {e}"); return dict(MLB_ID_OVERRIDES)
+
+def pull_fielding_components(year):
+    """Pull DRS subcomponents (rARM, rGDP, rPM, rGFP) from FanGraphs for all
+    non-catcher positions. These let us isolate arm value, double-play value,
+    range, etc. and use them in position-specific weighted D-Score formulas."""
+    print(f"  Pulling fielding components (rARM, rGDP) for {year}...")
+    fg_positions={'1b':'1B','2b':'2B','3b':'3B','ss':'SS','lf':'LF','cf':'CF','rf':'RF'}
+    hdrs={"User-Agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"}
+    all_data=[]
+    for fg_pos,our_pos in fg_positions.items():
+        try:
+            url=(f"https://www.fangraphs.com/api/leaders/major-league/data"
+                 f"?pos={fg_pos}&stats=fld&lg=al,nl&qual=0&season={year}&season1={year}"
+                 f"&startdate=&enddate=&team=0&pageitems=500&pagenum=1&type=1")
+            r=requests.get(url,headers=hdrs,timeout=15)
+            rows=json.loads(r.text).get('data',[])
+            for p in rows:
+                name=re.sub(r'<[^>]+>','',str(p.get('PlayerName','') or '')).strip()
+                if not name: continue
+                def fnum(k):
+                    v=p.get(k,0)
+                    try: return float(v) if v not in(None,'') else 0.0
+                    except: return 0.0
+                all_data.append({
+                    'player_name':to_last_first(name),
+                    'position':our_pos,
+                    'fg_inn':fnum('Inn'),
+                    'arm_runs':round(fnum('rARM'),2),   # Arm runs (DRS component)
+                    'dp_runs':round(fnum('rGDP'),2),    # Double Play runs (DRS component)
+                    'rpm_runs':round(fnum('rPM'),2),    # Plus/minus range runs
+                    'rgfp_runs':round(fnum('rGFP'),2),  # Good fielding plays runs
+                })
+            time.sleep(0.5)  # be nice to FanGraphs
+        except Exception as e:
+            print(f"    FG {fg_pos} failed: {e}")
+    df=pd.DataFrame(all_data)
+    if df.empty:
+        print("    WARNING: No fielding components retrieved.")
+        return df
+    # Deduplicate by (name, position) keeping max-innings row
+    df=df.sort_values('fg_inn',ascending=False).drop_duplicates(subset=['player_name','position'],keep='first')
+    print(f"    Got {len(df)} fielding records across 7 positions.")
+    return df
 
 def pull_catcher_stats(year):
     """Pull comprehensive catcher defensive metrics from FanGraphs — all components in runs.
@@ -185,22 +247,44 @@ def normalize(df,col):
         result.loc[group.index]=50.0 if mx==mn else((group[col]-mn)/(mx-mn)*100)
     return result.round(1)
 
+def _norm_within(series):
+    """Normalize a series 0-100. If all values equal, return 50s."""
+    mn,mx=series.min(),series.max()
+    if mx==mn: return pd.Series(50.0,index=series.index)
+    return ((series-mn)/(mx-mn)*100).round(1)
+
 def compute(merged):
     merged["raw_dscore"]=0.0; merged["adj_dscore"]=0.0; merged["dwar"]=0.0
-    # Non-catcher positions (OAA + DRS + FRV)
-    for pos,(w_oaa,w_drs,w_frv) in WEIGHTS.items():
-        if pos=="C": continue  # handled separately below
+    # ── Non-catcher positions: position-specific weighted formula ──
+    # Components: OAA (range), arm_runs (rARM), dp_runs (rGDP), DRS (overall)
+    for pos,weights in NON_CATCHER_WEIGHTS.items():
         mask=merged["position"]==pos
         if mask.sum()==0: continue
-        raw=(merged.loc[mask,"oaa_norm"]*w_oaa+merged.loc[mask,"drs_norm"]*w_drs+merged.loc[mask,"frv_norm"]*w_frv)
+        # Normalize each component within this position pool
+        norms={}
+        for key,col in [("oaa","oaa"),("arm_runs","arm_runs"),("dp_runs","dp_runs"),("drs","drs")]:
+            if col in merged.columns:
+                norms[key]=_norm_within(merged.loc[mask,col])
+            else:
+                norms[key]=pd.Series(50.0,index=merged.loc[mask].index)
+        raw=sum(norms[k]*weights[k] for k in weights)
         adj=(raw+POSITIONAL_ADJ.get(pos,0)).clip(0,99)
         merged.loc[mask,"raw_dscore"]=raw.round(1)
         merged.loc[mask,"adj_dscore"]=adj.round(1)
+        # D-WAR: derived from total runs (OAA + arm + dp + 0.5*DRS to avoid double-count)
+        # If component-runs are unavailable, fall back to adj-based estimate.
         for idx in merged[mask].index:
-            inn=float(merged.loc[idx,"innings"]) if "innings" in merged.columns else 0
-            runs=(float(adj.loc[idx])-50)*0.4
-            if inn>0: runs=runs*min(1.0,inn/1350)
-            merged.loc[idx,"dwar"]=round(runs/9.5,2)
+            total_runs=(float(merged.loc[idx,"oaa"])*0.6  # OAA in outs, ~0.6 runs/out
+                       +float(merged.loc[idx,"arm_runs"])
+                       +float(merged.loc[idx,"dp_runs"])
+                       +float(merged.loc[idx,"drs"])*0.5)  # half-weight DRS (overlaps)
+            if abs(total_runs)<0.01:
+                inn=float(merged.loc[idx,"innings"]) if "innings" in merged.columns else 0
+                runs=(float(adj.loc[idx])-50)*0.4
+                if inn>0: runs=runs*min(1.0,inn/1350)
+                merged.loc[idx,"dwar"]=round(runs/9.5,2)
+            else:
+                merged.loc[idx,"dwar"]=round(total_runs/9.5,2)
     # Catcher-specific formula — uses runs-based components from FanGraphs.
     # Each component normalized within catchers, then weighted-summed.
     c_mask=merged["position"]=="C"
@@ -279,6 +363,8 @@ def run_pipeline(year=CURRENT_YEAR):
     time.sleep(3)
     drs_df=pull_drs(year)
     time.sleep(3)
+    fielding_df=pull_fielding_components(year)
+    time.sleep(2)
     catcher_df=pull_catcher_stats(year)
 
     pm={"CF":"CF","LF":"LF","RF":"RF","SS":"SS","2B":"2B","3B":"3B","1B":"1B","C":"C","C-1B":"C","MI":"SS","OF":"CF"}
@@ -304,8 +390,27 @@ def run_pipeline(year=CURRENT_YEAR):
     # Drop any catchers that snuck in via OAA (shouldn't happen, but safety)
     merged=merged[merged["position"]!="C"].copy()
     # Initialize catcher-specific columns (will be 0 for non-catchers)
-    for col in ["frv","arm_runs","block_runs","cera_runs","rsb_runs","frp","defense","wp"]:
+    for col in ["frv","block_runs","cera_runs","rsb_runs","frp","defense","wp"]:
         if col not in merged.columns: merged[col]=0.0
+    # Initialize fielding components (will be filled by FanGraphs merge below)
+    for col in ["arm_runs","dp_runs","rpm_runs","rgfp_runs"]:
+        if col not in merged.columns: merged[col]=0.0
+
+    # ── Merge FanGraphs fielding components for non-catchers ──
+    if not fielding_df.empty:
+        # Drop dup columns from merged before merging in FanGraphs values
+        merged=merged.drop(columns=[c for c in ["arm_runs","dp_runs","rpm_runs","rgfp_runs"] if c in merged.columns])
+        merged=pd.merge(merged,fielding_df[["player_name","position","fg_inn","arm_runs","dp_runs","rpm_runs","rgfp_runs"]],
+                       on=["player_name","position"],how="left")
+        for col in ["arm_runs","dp_runs","rpm_runs","rgfp_runs","fg_inn"]:
+            merged[col]=merged[col].fillna(0)
+        # Backfill innings from FanGraphs when BRef didn't have the player
+        if "innings" in merged.columns:
+            merged["innings"]=merged.apply(
+                lambda r: r["fg_inn"] if (r.get("innings",0) or 0)<10 and r["fg_inn"]>0 else r["innings"],
+                axis=1
+            )
+        merged=merged.drop(columns=["fg_inn"])
 
     # ── Catcher data from FanGraphs (comprehensive, runs-based) ──
     if not catcher_df.empty:
@@ -328,16 +433,7 @@ def run_pipeline(year=CURRENT_YEAR):
     merged=merged[merged["position"].isin(WEIGHTS.keys())].copy()
     if merged.empty: print("ERROR: No players."); return
 
-    # ── Normalizations for non-catchers ──
-    merged["oaa_norm"]=normalize(merged,"oaa")
-    merged["drs_norm"]=normalize(merged,"drs")
-    merged["frv_norm"]=normalize(merged,"frv")
-
-    # Catcher CS%, block_norm kept for backward display compatibility but unused in formula
-    merged["arm_val"]=0.0
-    merged["block_val"]=0.0
-    merged["arm_norm"]=50.0
-    merged["block_norm"]=50.0
+    # compute() handles all normalization internally within each position pool
 
     merged=compute(merged)
 
@@ -365,9 +461,10 @@ def run_pipeline(year=CURRENT_YEAR):
                "cs_pct":arm_val_pct,"cs":int(round(float(r.get("cs",0)))),
                "sb":int(round(float(r.get("sb",0)))),"pb":int(round(float(r.get("pb",0)))),
                "wp":int(round(float(r.get("wp",0)))),
-               "arm_norm":round(float(r.get("arm_norm",50)),1),
-               "block_norm":round(float(r.get("block_norm",50)),1),
-               "frv_norm":round(float(r.get("frv_norm",50)),1),
+               # Non-catcher DRS subcomponents (0 for catchers — they use frp/etc instead)
+               "dp_runs":round(float(r.get("dp_runs",0)),2),
+               "rpm_runs":round(float(r.get("rpm_runs",0)),2),
+               "rgfp_runs":round(float(r.get("rgfp_runs",0)),2),
                "innings":round(float(r.get("innings",0))),
                "raw_dscore":round(float(r["raw_dscore"]),1),
                "adj_dscore":round(float(r["adj_dscore"]),1),
