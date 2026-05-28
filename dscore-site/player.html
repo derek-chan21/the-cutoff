@@ -8,26 +8,37 @@
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg:#0a0c0f; --surface:#111417; --border:rgba(255,255,255,0.07);
-    --text:#e8e6e0; --muted:#6b6b6b; --accent:#c8f060; --accent2:#60d4f0;
-    --warn:#f0a060; --danger:#f06060;
+    --bg:#0d1419; --bg2:#101820; --surface:#161f28; --surface2:#1e2937;
+    --border:rgba(220,200,160,0.07); --border2:rgba(220,200,160,0.13);
+    --text:#ede4d3; --muted:#8a7f6d; --muted2:#a89e8a;
+    --accent:#a8d864; --accent-soft:rgba(168,216,100,0.12);
+    --accent2:#6cb8d4; --leather:#d4a55a; --stitch:#c54a3f;
+    --warn:#e0a155; --danger:#c84a3f;
     --mono:'DM Mono',monospace; --display:'Bebas Neue',sans-serif; --body:'DM Sans',sans-serif;
   }
   * { box-sizing:border-box; margin:0; padding:0; }
-  body { background:var(--bg); color:var(--text); font-family:var(--body); min-height:100vh; }
+  html { scroll-behavior:smooth; }
+  body { background:var(--bg); color:var(--text); font-family:var(--body); min-height:100vh; overflow-x:hidden; }
   body::before {
     content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
-    background-image:linear-gradient(rgba(255,255,255,0.015) 1px,transparent 1px),
-                     linear-gradient(90deg,rgba(255,255,255,0.015) 1px,transparent 1px);
-    background-size:40px 40px;
+    background:
+      radial-gradient(ellipse 80% 60% at 50% -10%,rgba(168,216,100,0.05),transparent 50%),
+      radial-gradient(ellipse 60% 40% at 80% 100%,rgba(108,184,212,0.04),transparent 50%),
+      radial-gradient(ellipse 50% 40% at 10% 80%,rgba(212,165,90,0.03),transparent 50%);
   }
   .wrap { max-width:860px; margin:0 auto; padding:0 24px; position:relative; z-index:1; }
 
-  nav { border-bottom:1px solid var(--border); padding:18px 0; }
+  nav { border-bottom:1px solid var(--border); padding:18px 0; position:sticky; top:0; background:rgba(13,20,25,0.88); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); z-index:100; }
   nav .inner { max-width:860px; margin:0 auto; padding:0 24px; display:flex; align-items:center; justify-content:space-between; }
-  .nav-logo { font-family:var(--display); font-size:22px; color:var(--accent); text-decoration:none; letter-spacing:.05em; }
-  .nav-back { font-family:var(--mono); font-size:12px; color:var(--muted); text-decoration:none; letter-spacing:.06em; transition:color .2s; }
-  .nav-back:hover { color:var(--text); }
+  .nav-logo { display:flex; align-items:center; gap:10px; text-decoration:none; }
+  .nav-ball { width:22px; height:22px; border-radius:50%; background:#f4ebd9; position:relative; box-shadow:0 0 0 1px rgba(0,0,0,0.2),inset -3px -3px 6px rgba(0,0,0,0.1); animation:slow-spin 8s linear infinite; }
+  .nav-ball::before,.nav-ball::after { content:''; position:absolute; border:1.5px solid var(--stitch); border-radius:50%; width:80%; height:80%; top:10%; left:10%; border-color:transparent var(--stitch); }
+  .nav-ball::before { transform:rotate(45deg); }
+  .nav-ball::after { transform:rotate(-45deg); }
+  @keyframes slow-spin { to { transform:rotate(360deg); } }
+  .nav-logo-text { font-family:var(--display); font-size:22px; color:var(--accent); letter-spacing:.06em; line-height:1; }
+  .nav-back { font-family:var(--mono); font-size:12px; color:var(--muted2); text-decoration:none; letter-spacing:.06em; transition:all .25s; display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:3px; border:1px solid transparent; }
+  .nav-back:hover { color:var(--text); border-color:var(--border2); background:var(--surface); transform:translateX(-2px); }
 
   /* HERO */
   .hero { padding:48px 0 36px; border-bottom:1px solid var(--border); animation:fadeUp .4s ease both; }
@@ -37,7 +48,7 @@
   .player-photo-fb { width:120px; height:120px; border-radius:50%; background:var(--surface); border:2px solid var(--border); display:flex; align-items:center; justify-content:center; font-family:var(--display); font-size:48px; color:var(--muted); flex-shrink:0; }
   .position-tag {
     font-family:var(--mono); font-size:11px; letter-spacing:.12em; color:var(--accent);
-    background:rgba(200,240,96,0.08); border:1px solid rgba(200,240,96,0.2);
+    background:var(--accent-soft); border:1px solid var(--accent-soft);
     padding:4px 10px; border-radius:3px; display:inline-block; margin-bottom:14px;
   }
   .player-name { font-family:var(--display); font-size:clamp(48px,8vw,76px); line-height:.92; margin-bottom:14px; }
@@ -127,7 +138,7 @@
     font-family:var(--mono); font-size:10px; letter-spacing:.08em;
     padding:3px 8px; border-radius:3px; border:1px solid;
   }
-  .dis-badge.agree { color:var(--accent); border-color:rgba(200,240,96,0.3); background:rgba(200,240,96,0.08); }
+  .dis-badge.agree { color:var(--accent); border-color:rgba(168,216,100,0.3); background:var(--accent-soft); }
   .dis-badge.disagree { color:var(--danger); border-color:rgba(240,96,96,0.3); background:rgba(240,96,96,0.08); }
   .dis-badge.pending { color:var(--muted); border-color:var(--border); }
   .dis-title { font-size:14px; font-weight:500; }
@@ -174,7 +185,7 @@
   .ctx-table tr:last-child td { border-bottom:none; }
   .ctx-table tr.me td { color:var(--accent); }
   .rank-badge { font-family:var(--mono); font-size:11px; color:var(--muted); padding:2px 6px; border:1px solid var(--border); border-radius:3px; }
-  .rank-badge.top { color:var(--accent); border-color:rgba(200,240,96,0.3); }
+  .rank-badge.top { color:var(--accent); border-color:rgba(168,216,100,0.3); }
 
   footer { border-top:1px solid var(--border); padding:32px 0; margin-top:60px; }
   footer .inner { max-width:860px; margin:0 auto; padding:0 24px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; }
@@ -196,7 +207,10 @@
 
 <nav>
   <div class="inner">
-    <a class="nav-logo" href="index.html">THE CUTOFF</a>
+    <a class="nav-logo" href="index.html">
+      <span class="nav-ball"></span>
+      <span class="nav-logo-text">THE CUTOFF</span>
+    </a>
     <a class="nav-back" href="index.html">← Back to rankings</a>
   </div>
 </nav>

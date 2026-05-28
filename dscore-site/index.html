@@ -6,101 +6,307 @@
 <title>The Cutoff — MLB Defensive Analytics</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#080a0d;--surface:#0f1215;--surface2:#161a1f;--border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.1);--text:#e8e6e0;--muted:#5a5a5a;--muted2:#888;--accent:#c8f060;--accent2:#60d4f0;--warn:#f0a060;--danger:#f06060;--mono:'DM Mono',monospace;--display:'Bebas Neue',sans-serif;--body:'DM Sans',sans-serif}
+/* ── Warm stadium-twilight palette ─────────────────────────── */
+:root{
+  --bg:#0d1419;
+  --bg2:#101820;
+  --surface:#161f28;
+  --surface2:#1e2937;
+  --surface3:#27343f;
+  --border:rgba(220,200,160,0.07);
+  --border2:rgba(220,200,160,0.13);
+  --text:#ede4d3;
+  --muted:#8a7f6d;
+  --muted2:#a89e8a;
+  --accent:#a8d864;        /* field grass green */
+  --accent-soft:rgba(168,216,100,0.12);
+  --accent2:#6cb8d4;       /* stadium sky blue */
+  --leather:#d4a55a;       /* baseball leather */
+  --stitch:#c54a3f;        /* baseball seam red */
+  --warn:#e0a155;
+  --danger:#c84a3f;
+  --mono:'DM Mono',monospace;
+  --display:'Bebas Neue',sans-serif;
+  --body:'DM Sans',sans-serif;
+}
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--text);font-family:var(--body);min-height:100vh}
-body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse 80% 50% at 50% -20%,rgba(200,240,96,0.04),transparent)}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--body);
+  min-height:100vh;
+  overflow-x:hidden;
+}
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% -10%,rgba(168,216,100,0.05),transparent 50%),
+    radial-gradient(ellipse 60% 40% at 80% 100%,rgba(108,184,212,0.04),transparent 50%),
+    radial-gradient(ellipse 50% 40% at 10% 80%,rgba(212,165,90,0.03),transparent 50%);
+}
 .wrap{max-width:1080px;margin:0 auto;padding:0 28px;position:relative;z-index:1}
-nav{border-bottom:1px solid var(--border);padding:16px 0;position:sticky;top:0;background:rgba(8,10,13,0.92);backdrop-filter:blur(12px);z-index:100}
-nav .inner{max-width:1080px;margin:0 auto;padding:0 28px;display:flex;align-items:center;justify-content:space-between}
-.nav-logo{text-decoration:none;line-height:1}
-.nav-logo-main{font-family:var(--display);font-size:20px;color:var(--accent);letter-spacing:.08em;display:block}
-.nav-logo-sub{font-family:var(--mono);font-size:9px;color:var(--muted2);letter-spacing:.15em;display:block;margin-top:1px}
-.nav-links{display:flex;gap:24px;align-items:center}
-.nav-links a{font-size:12px;color:var(--muted2);text-decoration:none;font-family:var(--mono);letter-spacing:.06em;transition:color .2s}
-.nav-links a:hover,.nav-links a.active{color:var(--text)}
-.nav-badge{font-family:var(--mono);font-size:9px;background:rgba(200,240,96,0.1);color:var(--accent);border:1px solid rgba(200,240,96,0.2);padding:2px 7px;border-radius:2px;letter-spacing:.08em}
-.hero{padding:56px 0 40px;border-bottom:1px solid var(--border)}
-.hero-eye{font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--muted2);margin-bottom:14px}
-.hero h1{font-family:var(--display);font-size:clamp(50px,9vw,84px);line-height:.9;margin-bottom:18px}
-.hero h1 .g{color:var(--accent)}
-.hero-desc{font-size:14px;color:var(--muted2);line-height:1.7;max-width:540px;margin-bottom:22px}
-.pills{display:flex;gap:8px;flex-wrap:wrap}
-.pill{font-family:var(--mono);font-size:10px;letter-spacing:.08em;padding:4px 10px;border-radius:2px;border:1px solid}
-.pill.live{color:var(--accent);border-color:rgba(200,240,96,0.25);background:rgba(200,240,96,0.06)}
-.pill.partial{color:var(--warn);border-color:rgba(240,160,96,0.25);background:rgba(240,160,96,0.06)}
-.pill.soon{color:var(--muted2);border-color:var(--border)}
 
-/* ── Filter bar ─────────────────────────────────────────── */
-.filter-bar{display:flex;flex-wrap:wrap;gap:20px;padding:22px 0 18px;border-bottom:1px solid var(--border);align-items:flex-end}
-.filter-group{display:flex;flex-direction:column;gap:7px}
-.filter-group.right{margin-left:auto}
-.filter-label{font-family:var(--mono);font-size:9px;letter-spacing:.14em;color:var(--muted)}
-.pos-pills{display:flex;gap:5px;flex-wrap:wrap}
-.pos-tab{font-family:var(--mono);font-size:11px;padding:5px 11px;border-radius:2px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted2);transition:all .15s;white-space:nowrap}
-.pos-tab:hover{color:var(--text);border-color:var(--border2)}
-.pos-tab.active{background:var(--accent);color:#080a0d;border-color:var(--accent);font-weight:600}
-.pos-tab.all.active{background:var(--accent2);border-color:var(--accent2)}
-.filter-select{-webkit-appearance:none;appearance:none;background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-family:var(--mono);font-size:11px;padding:6px 32px 6px 11px;border-radius:2px;cursor:pointer;outline:none;min-width:140px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%235a5a5a'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;transition:border-color .15s}
-.filter-select:hover{border-color:rgba(255,255,255,0.2)}
-.filter-select:focus{border-color:var(--accent2);outline:none}
-.filter-select option{background:#1a1f26}
+/* ── Nav ─────────────────────────────────────────────────── */
+nav{
+  border-bottom:1px solid var(--border);padding:18px 0;position:sticky;top:0;
+  background:rgba(13,20,25,0.88);backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);z-index:100;
+}
+nav .inner{max-width:1080px;margin:0 auto;padding:0 28px;display:flex;align-items:center;justify-content:space-between}
+.nav-logo{text-decoration:none;line-height:1;display:flex;align-items:center;gap:10px}
+.nav-ball{
+  width:22px;height:22px;border-radius:50%;background:#f4ebd9;position:relative;
+  box-shadow:0 0 0 1px rgba(0,0,0,0.2),inset -3px -3px 6px rgba(0,0,0,0.1);
+  animation:slow-spin 8s linear infinite;
+}
+.nav-ball::before,.nav-ball::after{
+  content:'';position:absolute;border:1.5px solid var(--stitch);
+  border-radius:50%;width:80%;height:80%;top:10%;left:10%;
+  border-color:transparent var(--stitch);
+}
+.nav-ball::before{transform:rotate(45deg)}
+.nav-ball::after{transform:rotate(-45deg)}
+@keyframes slow-spin{to{transform:rotate(360deg)}}
+.nav-logo-text{display:flex;flex-direction:column}
+.nav-logo-main{font-family:var(--display);font-size:22px;color:var(--accent);letter-spacing:.08em}
+.nav-logo-sub{font-family:var(--mono);font-size:9px;color:var(--muted2);letter-spacing:.18em;margin-top:2px}
+.nav-links{display:flex;gap:26px;align-items:center}
+.nav-links a{
+  font-size:12px;color:var(--muted2);text-decoration:none;font-family:var(--mono);
+  letter-spacing:.06em;transition:color .25s;position:relative;padding:4px 0;
+}
+.nav-links a::after{
+  content:'';position:absolute;bottom:-2px;left:0;right:0;height:1px;
+  background:var(--accent);transform:scaleX(0);transform-origin:left;
+  transition:transform .3s ease;
+}
+.nav-links a:hover,.nav-links a.active{color:var(--text)}
+.nav-links a.active::after,.nav-links a:hover::after{transform:scaleX(1)}
+.nav-badge{
+  font-family:var(--mono);font-size:9px;color:var(--accent);
+  background:var(--accent-soft);border:1px solid rgba(168,216,100,0.22);
+  padding:3px 8px;border-radius:3px;letter-spacing:.1em;
+}
+
+/* ── Hero ────────────────────────────────────────────────── */
+.hero{padding:64px 0 44px;border-bottom:1px solid var(--border);position:relative}
+.hero-eye{font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--muted2);margin-bottom:16px}
+.hero h1{font-family:var(--display);font-size:clamp(54px,9vw,90px);line-height:.9;margin-bottom:20px;letter-spacing:.01em}
+.hero h1 .g{color:var(--accent);position:relative;display:inline-block}
+.hero h1 .g::after{
+  content:'';position:absolute;left:0;bottom:6%;width:100%;height:8px;
+  background:var(--accent);opacity:.18;border-radius:2px;z-index:-1;
+  animation:swipe 1s ease-out .4s both;
+}
+@keyframes swipe{from{transform:scaleX(0);transform-origin:left}to{transform:scaleX(1)}}
+.hero-desc{font-size:14.5px;color:var(--muted2);line-height:1.7;max-width:560px;margin-bottom:24px}
+.pills{display:flex;gap:8px;flex-wrap:wrap}
+.pill{
+  font-family:var(--mono);font-size:10px;letter-spacing:.08em;padding:5px 11px;
+  border-radius:3px;border:1px solid;transition:transform .2s;
+}
+.pill:hover{transform:translateY(-1px)}
+.pill.live{color:var(--accent);border-color:rgba(168,216,100,0.3);background:var(--accent-soft)}
+.pill.partial{color:var(--warn);border-color:rgba(224,161,85,0.3);background:rgba(224,161,85,0.07)}
+.pill.soon{color:var(--muted2);border-color:var(--border2)}
+
+/* ── Baseball Diamond Position Selector ───────────────────── */
+.field-section{
+  padding:32px 0 24px;border-bottom:1px solid var(--border);
+  display:flex;gap:32px;align-items:center;flex-wrap:wrap;
+}
+.diamond-wrap{
+  position:relative;width:300px;height:300px;flex-shrink:0;
+  animation:fade-in-up .6s ease both;
+}
+.diamond-bg{
+  position:absolute;inset:0;border-radius:50%;
+  background:
+    radial-gradient(circle at 50% 78%, rgba(212,165,90,0.16) 0%, rgba(212,165,90,0.08) 18%, transparent 32%),
+    radial-gradient(circle at 50% 50%, rgba(168,216,100,0.10) 30%, rgba(168,216,100,0.04) 50%, transparent 70%);
+  border:1px solid var(--border);
+}
+/* Infield diamond lines */
+.diamond-lines{position:absolute;inset:0;pointer-events:none}
+.diamond-lines svg{width:100%;height:100%;display:block}
+.diamond-lines .basepath{stroke:rgba(212,165,90,0.4);stroke-width:1;fill:none;stroke-dasharray:3 4}
+.diamond-lines .grass{stroke:rgba(168,216,100,0.18);stroke-width:1;fill:none}
+.diamond-lines .pitcher{fill:rgba(212,165,90,0.18);stroke:rgba(212,165,90,0.35);stroke-width:1}
+/* Position buttons placed at field coordinates */
+.pos-btn{
+  position:absolute;transform:translate(-50%,-50%);
+  width:46px;height:46px;border-radius:50%;
+  border:1px solid var(--border2);background:var(--surface2);
+  color:var(--muted2);font-family:var(--mono);font-size:11px;font-weight:600;
+  cursor:pointer;transition:all .25s cubic-bezier(.34,1.56,.64,1);
+  display:flex;align-items:center;justify-content:center;
+  letter-spacing:.04em;
+}
+.pos-btn:hover{
+  color:var(--text);border-color:var(--accent);background:var(--surface3);
+  transform:translate(-50%,-50%) scale(1.1);
+  box-shadow:0 0 0 4px rgba(168,216,100,0.08);
+}
+.pos-btn.active{
+  background:var(--accent);color:var(--bg);border-color:var(--accent);
+  font-weight:700;transform:translate(-50%,-50%) scale(1.12);
+  box-shadow:0 0 0 4px rgba(168,216,100,0.18),0 6px 18px rgba(168,216,100,0.25);
+  animation:pop .35s ease;
+}
+@keyframes pop{0%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.3)}100%{transform:translate(-50%,-50%) scale(1.12)}}
+.pos-cf{top:14%;left:50%}
+.pos-lf{top:26%;left:22%}
+.pos-rf{top:26%;left:78%}
+.pos-3b{top:54%;left:24%}
+.pos-1b{top:54%;left:76%}
+.pos-ss{top:46%;left:39%}
+.pos-2b{top:46%;left:61%}
+.pos-c{top:84%;left:50%;background:rgba(197,74,63,0.12);border-color:rgba(197,74,63,0.35);color:var(--stitch)}
+.pos-c:hover{background:rgba(197,74,63,0.2);border-color:var(--stitch)}
+.pos-c.active{background:var(--stitch);color:var(--text);border-color:var(--stitch);box-shadow:0 0 0 4px rgba(197,74,63,0.2),0 6px 18px rgba(197,74,63,0.3)}
+/* ALL button — center of field */
+.pos-all{top:65%;left:50%;width:54px;height:54px;font-size:9px;letter-spacing:.1em}
+.pos-all.active{background:var(--leather);color:var(--bg);border-color:var(--leather);box-shadow:0 0 0 4px rgba(212,165,90,0.18),0 6px 18px rgba(212,165,90,0.3)}
+
+/* Field side info */
+.field-info{flex:1;min-width:260px}
+.field-label{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.14em;margin-bottom:10px}
+.field-title{font-family:var(--display);font-size:28px;color:var(--text);letter-spacing:.02em;margin-bottom:6px;line-height:1}
+.field-hint{font-family:var(--mono);font-size:11px;color:var(--muted2);line-height:1.7;margin-bottom:16px}
+.field-team{display:flex;flex-direction:column;gap:7px;max-width:200px}
+.field-team .filter-label{font-family:var(--mono);font-size:9px;letter-spacing:.14em;color:var(--muted)}
+.filter-select{
+  -webkit-appearance:none;appearance:none;
+  background:var(--surface2);border:1px solid var(--border2);color:var(--text);
+  font-family:var(--mono);font-size:11px;padding:8px 32px 8px 12px;border-radius:3px;
+  cursor:pointer;outline:none;width:100%;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23a89e8a'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 10px center;
+  transition:all .2s;
+}
+.filter-select:hover{border-color:rgba(220,200,160,0.25)}
+.filter-select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.filter-select option{background:var(--surface2)}
 
 /* ── Table ──────────────────────────────────────────────── */
-.twrap{padding:20px 0 40px}
-.thead-row{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px}
-.ttitle{font-family:var(--display);font-size:30px}
-.tmeta{font-family:var(--mono);font-size:10px;color:var(--muted2);margin-top:2px}
-.warn-tag{font-family:var(--mono);font-size:10px;color:var(--warn);background:rgba(240,160,96,0.08);border:1px solid rgba(240,160,96,0.2);padding:4px 10px;border-radius:2px}
+.twrap{padding:24px 0 40px;animation:fade-in-up .5s ease both}
+.thead-row{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:12px}
+.ttitle{font-family:var(--display);font-size:34px;letter-spacing:.02em}
+.tmeta{font-family:var(--mono);font-size:10px;color:var(--muted2);margin-top:3px;letter-spacing:.04em}
+.warn-tag{font-family:var(--mono);font-size:10px;color:var(--warn);background:rgba(224,161,85,0.08);border:1px solid rgba(224,161,85,0.22);padding:5px 11px;border-radius:3px;letter-spacing:.04em}
+.catcher-tag{font-family:var(--mono);font-size:10px;color:var(--accent);background:var(--accent-soft);border:1px solid rgba(168,216,100,0.22);padding:5px 11px;border-radius:3px;letter-spacing:.04em}
 table{width:100%;border-collapse:collapse}
-thead th{font-family:var(--mono);font-size:9px;letter-spacing:.12em;color:var(--muted);text-align:left;padding:8px 10px;border-bottom:1px solid var(--border);font-weight:400}
+thead th{
+  font-family:var(--mono);font-size:9px;letter-spacing:.13em;color:var(--muted);
+  text-align:left;padding:10px 10px;border-bottom:1px solid var(--border);font-weight:400;
+}
 thead th.r{text-align:right}
-thead th.sortable{cursor:pointer;user-select:none;transition:color .15s;white-space:nowrap}
+thead th.sortable{cursor:pointer;user-select:none;transition:color .2s;white-space:nowrap}
 thead th.sortable:hover{color:var(--text)}
-thead th.sorted{color:var(--accent2)}
+thead th.sorted{color:var(--accent)}
 .sarr{font-size:8px;margin-left:3px;vertical-align:middle}
-tbody tr{border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s}
-tbody tr:hover{background:rgba(255,255,255,0.02)}
-tbody tr.r1{background:rgba(200,240,96,0.03)}
-td{padding:10px;vertical-align:middle}
-.rnk{font-family:var(--mono);font-size:11px;color:var(--muted);width:36px;text-align:center}
-.rnk.g{color:var(--accent);font-weight:500}
-.tplayer{display:flex;align-items:center;gap:10px}
-.hs{width:36px;height:36px;border-radius:50%;object-fit:cover;background:var(--surface2);border:1px solid var(--border);flex-shrink:0}
-.hsfb{width:36px;height:36px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:12px;color:var(--muted);flex-shrink:0}
-.pn{font-size:14px;font-weight:500}
-.pt{font-size:11px;color:var(--muted2);font-family:var(--mono)}
-.tr{text-align:right;font-family:var(--mono);font-size:12px;color:var(--muted2)}
+tbody tr{
+  border-bottom:1px solid var(--border);cursor:pointer;
+  transition:background .2s, transform .2s;
+  opacity:0;animation:row-in .5s ease forwards;
+}
+tbody tr:hover{background:rgba(255,255,255,0.025)}
+tbody tr.r1{background:rgba(168,216,100,0.04);border-left:2px solid var(--accent)}
+tbody tr.r1:hover{background:rgba(168,216,100,0.07)}
+@keyframes row-in{from{opacity:0;transform:translateX(-12px)}to{opacity:1;transform:translateX(0)}}
+td{padding:11px 10px;vertical-align:middle;transition:color .15s}
+.rnk{font-family:var(--mono);font-size:11px;color:var(--muted);width:42px;text-align:center}
+.rnk.g{color:var(--accent);font-weight:600}
+.tplayer{display:flex;align-items:center;gap:11px}
+.hs{
+  width:38px;height:38px;border-radius:50%;object-fit:cover;
+  background:var(--surface2);border:1px solid var(--border);flex-shrink:0;
+  transition:transform .25s, border-color .25s;
+}
+tbody tr:hover .hs{transform:scale(1.08);border-color:var(--border2)}
+.hsfb{
+  width:38px;height:38px;border-radius:50%;background:var(--surface2);
+  border:1px solid var(--border);display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:13px;color:var(--muted);flex-shrink:0;
+}
+.pn{font-size:14px;font-weight:500;color:var(--text)}
+.pt{font-size:11px;color:var(--muted2);font-family:var(--mono);margin-top:1px;letter-spacing:.03em}
+.tr{text-align:right;font-family:var(--mono);font-size:12.5px;color:var(--muted2)}
 .tr.oaa{color:var(--accent2)}
-.tr.z{color:rgba(255,255,255,0.12)}
+.tr.z{color:rgba(255,255,255,0.13)}
 .tr.sorted-col{color:var(--text)}
 .tpos{text-align:center;font-family:var(--mono);font-size:11px;color:var(--muted2)}
 .tds{text-align:right}
-.dsn{font-family:var(--display);font-size:24px}
-.dsn.e{color:var(--accent)}.dsn.g{color:var(--accent2)}.dsn.a{color:var(--muted2)}
-.tdw{text-align:right;font-family:var(--display);font-size:20px}
+.dsn{font-family:var(--display);font-size:26px;letter-spacing:.01em;transition:color .2s}
+.dsn.e{color:var(--accent)}
+.dsn.g{color:var(--accent2)}
+.dsn.a{color:var(--muted2)}
+.tdw{text-align:right;font-family:var(--display);font-size:21px}
 .tdw.p{color:var(--accent)}.tdw.n{color:var(--danger)}.tdw.z{color:var(--muted2)}
 .btd{width:60px;padding-right:10px}
-.bt{height:2px;background:rgba(255,255,255,0.05);border-radius:1px;overflow:hidden}
-.bf{height:100%;border-radius:1px;background:var(--accent)}
-.empty{text-align:center;padding:60px 0;font-family:var(--mono);font-size:12px;color:var(--muted)}
-.err{background:rgba(240,96,96,0.06);border:1px solid rgba(240,96,96,0.2);border-radius:4px;padding:20px 24px;margin:40px 0;font-family:var(--mono);font-size:12px;color:var(--danger);line-height:1.8}
+.bt{height:3px;background:rgba(255,255,255,0.05);border-radius:2px;overflow:hidden}
+.bf{height:100%;border-radius:2px;background:var(--accent);transition:width .8s cubic-bezier(.34,1.2,.64,1)}
+tbody tr.r1 .bf{background:linear-gradient(90deg,var(--accent),var(--leather))}
+.empty{text-align:center;padding:80px 0;font-family:var(--mono);font-size:12px;color:var(--muted)}
+.err{background:rgba(200,74,63,0.07);border:1px solid rgba(200,74,63,0.22);border-radius:5px;padding:22px 26px;margin:40px 0;font-family:var(--mono);font-size:12px;color:var(--danger);line-height:1.8}
+
+/* ── Baseball loader ────────────────────────────────────── */
+.loader-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 0;gap:18px}
+.baseball-loader{
+  width:48px;height:48px;border-radius:50%;
+  background:radial-gradient(circle at 35% 35%,#fff8e6 0%,#f4ebd9 40%,#ddd0b3 100%);
+  position:relative;
+  box-shadow:0 0 0 1px rgba(0,0,0,0.2),inset -4px -4px 10px rgba(0,0,0,0.12);
+  animation:ball-bounce 1.4s cubic-bezier(.5,0,.5,1) infinite;
+}
+.baseball-loader::before,.baseball-loader::after{
+  content:'';position:absolute;border:2px solid var(--stitch);
+  border-radius:50%;width:74%;height:74%;top:13%;left:13%;
+  border-color:transparent var(--stitch);
+}
+.baseball-loader::before{transform:rotate(45deg)}
+.baseball-loader::after{transform:rotate(-45deg)}
+@keyframes ball-bounce{
+  0%,100%{transform:translateY(0) rotate(0)}
+  50%{transform:translateY(-14px) rotate(180deg)}
+}
+.loader-label{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.18em}
+
+/* ── Footer ─────────────────────────────────────────────── */
 footer{border-top:1px solid var(--border);padding:36px 0;margin-top:40px}
 footer .inner{max-width:1080px;margin:0 auto;padding:0 28px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}
-.flogo{font-family:var(--display);font-size:20px;color:var(--accent);letter-spacing:.08em}
-.ftag{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.12em;margin-top:2px}
-.fnote{font-family:var(--mono);font-size:10px;color:var(--muted);text-align:right;line-height:1.8}
-@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-.hero{animation:fadeUp .4s ease both}
-#mainContent{animation:fadeUp .4s .1s ease both}
+.flogo{font-family:var(--display);font-size:22px;color:var(--accent);letter-spacing:.08em}
+.ftag{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.14em;margin-top:3px}
+.fnote{font-family:var(--mono);font-size:10px;color:var(--muted);text-align:right;line-height:1.8;letter-spacing:.04em}
+
+/* ── Shared animations ──────────────────────────────────── */
+@keyframes fade-in-up{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.hero{animation:fade-in-up .5s ease both}
+
+/* ── Responsive ─────────────────────────────────────────── */
+@media (max-width:680px){
+  .field-section{flex-direction:column;align-items:flex-start}
+  .diamond-wrap{margin:0 auto}
+  .field-info{width:100%}
+  .field-team{max-width:100%}
+  thead th{padding:8px 6px;font-size:8px}
+  td{padding:9px 6px}
+  .dsn{font-size:22px}
+  .tdw{font-size:18px}
+  .hero h1{font-size:48px}
+}
 </style>
 </head>
 <body>
 <nav>
   <div class="inner">
     <a class="nav-logo" href="index.html">
-      <span class="nav-logo-main">THE CUTOFF</span>
-      <span class="nav-logo-sub">DEFENSIVE ANALYTICS</span>
+      <span class="nav-ball"></span>
+      <span class="nav-logo-text">
+        <span class="nav-logo-main">THE CUTOFF</span>
+        <span class="nav-logo-sub">DEFENSIVE ANALYTICS</span>
+      </span>
     </a>
     <div class="nav-links">
       <a href="index.html" class="active">Rankings</a>
@@ -113,19 +319,24 @@ footer .inner{max-width:1080px;margin:0 auto;padding:0 28px;display:flex;justify
   <div class="hero">
     <div class="hero-eye">THE CUTOFF — MLB DEFENSIVE ANALYTICS — 2026 SEASON</div>
     <h1>THE <span class="g">D-SCORE</span><br>RANKINGS</h1>
-    <p class="hero-desc">Position-specific defensive ratings combining OAA, DRS, and positional value into a single comparable score. The Cutoff's proprietary formula — updated daily.</p>
+    <p class="hero-desc">Position-specific defensive ratings combining OAA, DRS, framing, and positional value into a single comparable score. The Cutoff's proprietary formula — updated daily.</p>
     <div class="pills" id="metricPills">
       <span class="pill live">● OAA — LIVE</span>
       <span class="pill partial">◐ DRS — EARLY SEASON</span>
-      <span class="pill soon" id="frvPill">○ FRV — COMING SOON</span>
+      <span class="pill live" id="frvPill">● FRV — LIVE</span>
     </div>
   </div>
-  <div id="mainContent"><div class="empty">Loading...</div></div>
+  <div id="mainContent">
+    <div class="loader-wrap">
+      <div class="baseball-loader"></div>
+      <div class="loader-label">LOADING DATA…</div>
+    </div>
+  </div>
 </div>
 <footer>
   <div class="inner">
     <div><div class="flogo">THE CUTOFF</div><div class="ftag">DEFENSIVE ANALYTICS · EST. 2026</div></div>
-    <div class="fnote" id="footerMeta">Data: Baseball Savant · Baseball Reference<br>D-Score © The Cutoff · Updated daily</div>
+    <div class="fnote" id="footerMeta">Data: Baseball Savant · Baseball Reference · FanGraphs<br>D-Score © The Cutoff · Updated daily</div>
   </div>
 </footer>
 <script>
@@ -177,7 +388,6 @@ function getFilteredPlayers(){
   if(filterTeam!=='ALL'){
     list=list.filter(function(p){return p.team===filterTeam;});
   }
-  // For BLK (passed balls), lower is better — invert sort default
   var invertSort=(sortCol==='pb');
   list=list.slice().sort(function(a,b){
     var va=+(a[sortCol])||0, vb=+(b[sortCol])||0;
@@ -207,23 +417,49 @@ function sortTh(col,label,align){
     +label+sortArrow(col)+'</th>';
 }
 
-function renderFilters(teams){
-  var posHTML=['ALL'].concat(PO).map(function(p){
-    var lbl=p==='ALL'?'ALL':p;
-    var cls='pos-tab'+(p==='ALL'?' all':'')+(filterPos===p?' active':'');
-    return '<button class="'+cls+'" onclick="setPos(\''+p+'\')">'+lbl+'</button>';
+function renderDiamond(teams){
+  // Baseball diamond layout — each position placed at its field coordinate
+  var positions=[
+    {key:'CF',cls:'pos-cf'},{key:'LF',cls:'pos-lf'},{key:'RF',cls:'pos-rf'},
+    {key:'3B',cls:'pos-3b'},{key:'SS',cls:'pos-ss'},{key:'2B',cls:'pos-2b'},
+    {key:'1B',cls:'pos-1b'},{key:'C',cls:'pos-c'}
+  ];
+  var btns=positions.map(function(p){
+    var active=filterPos===p.key?' active':'';
+    return '<button class="pos-btn '+p.cls+active+'" onclick="setPos(\''+p.key+'\')" title="'+PL[p.key]+'">'+p.key+'</button>';
   }).join('');
+  var allActive=filterPos==='ALL'?' active':'';
+
+  // SVG diamond lines & pitcher's mound
+  var svg='<div class="diamond-lines"><svg viewBox="0 0 300 300" preserveAspectRatio="xMidYMid meet">'
+    +'<polygon class="basepath" points="150,165 215,225 150,252 85,225"/>'  // infield diamond
+    +'<circle class="grass" cx="150" cy="150" r="120"/>'                     // outfield arc
+    +'<circle class="pitcher" cx="150" cy="200" r="7"/>'                     // pitcher's mound
+    +'</svg></div>';
 
   var teamOpts='<option value="ALL">All Teams</option>'
     +teams.map(function(t){
       return '<option value="'+t+'"'+(filterTeam===t?' selected':'')+'>'+t+'</option>';
     }).join('');
 
-  return '<div class="filter-bar">'
-    +'<div class="filter-group"><div class="filter-label">POSITION</div><div class="pos-pills">'+posHTML+'</div></div>'
-    +'<div class="filter-group right"><div class="filter-label">TEAM</div>'
-    +'<select class="filter-select" onchange="setTeam(this.value)">'+teamOpts+'</select></div>'
-    +'</div>';
+  var titleText=filterPos==='ALL'?'All Positions':PL[filterPos]||filterPos;
+
+  return '<div class="field-section">'
+    +'<div class="diamond-wrap">'
+      +'<div class="diamond-bg"></div>'+svg
+      +btns
+      +'<button class="pos-btn pos-all'+allActive+'" onclick="setPos(\'ALL\')" title="All positions">ALL</button>'
+    +'</div>'
+    +'<div class="field-info">'
+      +'<div class="field-label">VIEWING</div>'
+      +'<div class="field-title" id="fieldTitle">'+titleText+'</div>'
+      +'<div class="field-hint">Click a position on the diamond to filter. ALL shows everyone.</div>'
+      +'<div class="field-team">'
+        +'<div class="filter-label">TEAM FILTER</div>'
+        +'<select class="filter-select" onchange="setTeam(this.value)">'+teamOpts+'</select>'
+      +'</div>'
+    +'</div>'
+  +'</div>';
 }
 
 function renderTable(players){
@@ -242,13 +478,13 @@ function renderTable(players){
     var dwar=(p.dwar>=0?'+':'')+p.dwar;
     var pct=Math.round(Math.min(p.adj_dscore/99,1)*100);
     var dwarCls='tdw '+wc(p.dwar);
-    var row='<tr class="'+(i===0?'r1':'')+'" onclick="location=\'player.html?pos='+p.position+'&rank='+p.rank+'\'">'
+    var delay=Math.min(i*0.025,0.6);
+    var row='<tr class="'+(i===0?'r1':'')+'" style="animation-delay:'+delay+'s" onclick="location=\'player.html?pos='+p.position+'&rank='+p.rank+'\'">'
       +'<td class="rnk '+(i===0?'g':'')+'">'+(i===0?'#1':'#'+(i+1))+'</td>'
       +'<td><div class="tplayer">'+hs+'<div><div class="pn">'+p.player+'</div>'
       +'<div class="pt">'+p.team+(showPos?' · '+p.position:'')+'</div></div></div></td>'
       +(showPos?'<td class="tpos">'+p.position+'</td>':'');
     if(isC){
-      // Catcher-specific columns: FRV, ARM (CS%), BLK (PB)
       var frv=p.frv===0?'—':(p.frv>=0?'+':'')+p.frv.toFixed(1);
       var arm=p.cs_pct>0?p.cs_pct.toFixed(0)+'%':'—';
       var blk=p.pb!==undefined?p.pb:'—';
@@ -267,8 +503,8 @@ function renderTable(players){
            +'<td class="'+drsCls+'">'+drs+'</td>');
     }
     row+=('<td class="'+dwarCls+'">'+dwar+'</td>'
-         +'<td class="tds"><span class="dsn '+sc(p.adj_dscore)+'">'+p.adj_dscore+'</span></td>'
-         +'<td class="btd"><div class="bt"><div class="bf" style="width:'+pct+'%"></div></div></td>'
+         +'<td class="tds"><span class="dsn '+sc(p.adj_dscore)+'" data-target="'+p.adj_dscore+'">'+p.adj_dscore+'</span></td>'
+         +'<td class="btd"><div class="bt"><div class="bf" style="width:0%" data-pct="'+pct+'"></div></div></td>'
          +'</tr>');
     return row;
   }).join('');
@@ -278,19 +514,18 @@ function renderTable(players){
   var sortLabelMap={adj_dscore:'D-Score',oaa:'OAA',drs:'DRS',dwar:'D-WAR',frv:'FRV',cs_pct:'CS%',pb:'PB'};
   var sortLabel=sortLabelMap[sortCol]||sortCol;
 
-  // Catcher badge: show which components are available
-  var catcherNote='';
+  var tag='';
   if(isC){
-    catcherNote='<span style="font-family:var(--mono);font-size:10px;color:var(--accent);background:rgba(200,240,96,0.08);border:1px solid rgba(200,240,96,0.18);padding:4px 10px;border-radius:2px">'
-      +(hasFRV?'● FRV + ARM + BLK + DRS':'◐ ARM + BLK + DRS · Framing pending')+'</span>';
+    tag='<span class="catcher-tag">'+(hasFRV?'● FRV + ARM + BLK + DRS':'◐ ARM + BLK + DRS · Framing pending')+'</span>';
+  } else if(!hasDRS){
+    tag='<span class="warn-tag">DRS pending early season</span>';
   }
 
   return '<div class="twrap">'
     +'<div class="thead-row"><div>'
     +'<div class="ttitle">'+titleText+teamText+'</div>'
     +'<div class="tmeta">'+players.length+' players · sorted by '+sortLabel+(sortAsc?' ▲':' ▼')+' · The Cutoff D-Score</div>'
-    +'</div>'
-    +(isC?catcherNote:(!hasDRS?'<span class="warn-tag">DRS pending early season</span>':''))
+    +'</div>'+tag
     +'</div>'
     +'<table><thead><tr>'
     +'<th>#</th><th>Player</th>'
@@ -303,16 +538,39 @@ function renderTable(players){
     +'<th></th>'
     +'</tr></thead>'
     +'<tbody>'+rows+'</tbody></table>'
-    +(isC?'<div style="font-family:var(--mono);font-size:9px;color:var(--muted);padding:12px 0 4px;line-height:1.8">'
-      +'FRV = Framing Runs Value (Baseball Savant) · ARM = Caught Stealing % (vs avg) · BLK = Passed Balls (lower is better) · Formula: FRV 40% + DRS 25% + ARM 20% + BLK 15%'
+    +(isC?'<div style="font-family:var(--mono);font-size:9px;color:var(--muted);padding:14px 0 4px;line-height:1.8;letter-spacing:.04em">'
+      +'FRV = Framing Runs Value (FanGraphs) · ARM = Caught Stealing % · BLK = Passed Balls (lower is better) · Formula: FRV 40% + DRS 25% + ARM 20% + BLK 15%'
       +'</div>':'')
     +'</div>';
+}
+
+// After render, animate D-Score numbers from 0 → target and bar widths from 0 → pct
+function animateNumbers(){
+  document.querySelectorAll('.dsn[data-target]').forEach(function(el,i){
+    var target=parseFloat(el.getAttribute('data-target'))||0;
+    var start=performance.now();
+    var duration=600+Math.min(i*15,300);
+    el.textContent='0';
+    function step(now){
+      var t=Math.min((now-start)/duration,1);
+      var eased=1-Math.pow(1-t,3);
+      el.textContent=(target*eased).toFixed(1);
+      if(t<1) requestAnimationFrame(step);
+      else el.textContent=target;
+    }
+    requestAnimationFrame(step);
+  });
+  document.querySelectorAll('.bf[data-pct]').forEach(function(bf){
+    var pct=bf.getAttribute('data-pct');
+    setTimeout(function(){bf.style.width=pct+'%';},80);
+  });
 }
 
 function render(){
   var teams=getTeams();
   var players=getFilteredPlayers();
-  document.getElementById('mainContent').innerHTML=renderFilters(teams)+renderTable(players);
+  document.getElementById('mainContent').innerHTML=renderDiamond(teams)+renderTable(players);
+  animateNumbers();
 }
 
 async function init(){
@@ -322,13 +580,10 @@ async function init(){
     D=await r.json();
     if(D.meta&&D.meta.generated_at){
       var d=new Date(D.meta.generated_at);
-      document.getElementById('footerMeta').innerHTML='Data: Baseball Savant · Baseball Reference<br>© The Cutoff · Updated '+d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+      document.getElementById('footerMeta').innerHTML='Data: Baseball Savant · Baseball Reference · FanGraphs<br>© The Cutoff · Updated '+d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
     }
-    if(D.meta&&D.meta.frv_loaded){
-      var fp=document.getElementById('frvPill');
-      if(fp){fp.className='pill live';fp.textContent='● FRV — LIVE';}
-    }
-    render();
+    // Small artificial loader delay so the baseball animation is visible (perceived polish)
+    setTimeout(render, 400);
   }catch(e){
     document.getElementById('mainContent').innerHTML='<div class="err"><strong>Could not load data.</strong><br>Error: '+e.message+'</div>';
   }
