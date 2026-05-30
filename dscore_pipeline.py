@@ -3,7 +3,7 @@ import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
-from pybaseball import statcast_outs_above_average
+from pybaseball import statcast_outs_above_average, statcast_sprint_speed, statcast_catcher_poptime
 
 CURRENT_YEAR=datetime.now().year
 # ─────────────────────────────────────────────────────────────────────────────
@@ -110,6 +110,48 @@ def pull_fielding_components(year):
     df=df.sort_values('fg_inn',ascending=False).drop_duplicates(subset=['player_name','position'],keep='first')
     print(f"    Got {len(df)} fielding records across 7 positions.")
     return df
+
+def pull_sprint_speed(year):
+    """Statcast sprint speed (ft/sec), HP-to-1B time, bolt count. All non-pitchers."""
+    print(f"  Pulling sprint speed for {year}...")
+    try:
+        df = statcast_sprint_speed(year)
+        if df is None or df.empty:
+            return pd.DataFrame()
+        df = df.rename(columns={'last_name, first_name': 'player_name'})
+        df['player_name'] = df['player_name'].astype(str).str.strip()
+        keep = df[['player_name', 'sprint_speed', 'hp_to_1b', 'bolts']].copy()
+        keep['sprint_speed'] = pd.to_numeric(keep['sprint_speed'], errors='coerce').fillna(0)
+        keep['hp_to_1b']     = pd.to_numeric(keep['hp_to_1b'], errors='coerce').fillna(0)
+        keep['bolts']        = pd.to_numeric(keep['bolts'], errors='coerce').fillna(0)
+        print(f"    Got {len(keep)} sprint speed entries.")
+        return keep
+    except Exception as e:
+        print(f"    WARNING (sprint speed): {e}")
+        return pd.DataFrame()
+
+def pull_catcher_poptime_data(year):
+    """Statcast catcher pop time + arm strength (mph) + exchange time."""
+    print(f"  Pulling catcher pop time / arm strength for {year}...")
+    try:
+        df = statcast_catcher_poptime(year)
+        if df is None or df.empty:
+            return pd.DataFrame()
+        df = df.rename(columns={
+            'entity_name': 'player_name',
+            'pop_2b_sba': 'pop_time_2b',
+            'maxeff_arm_2b_3b_sba': 'arm_strength_mph',
+            'exchange_2b_3b_sba': 'exchange_time',
+        })
+        df['player_name'] = df['player_name'].astype(str).str.strip()
+        keep = df[['player_name', 'pop_time_2b', 'arm_strength_mph', 'exchange_time']].copy()
+        for col in ['pop_time_2b', 'arm_strength_mph', 'exchange_time']:
+            keep[col] = pd.to_numeric(keep[col], errors='coerce').fillna(0)
+        print(f"    Got {len(keep)} catcher pop time entries.")
+        return keep
+    except Exception as e:
+        print(f"    WARNING (pop time): {e}")
+        return pd.DataFrame()
 
 def pull_catcher_stats(year):
     """Pull comprehensive catcher defensive metrics from FanGraphs — all components in runs.
@@ -366,6 +408,10 @@ def run_pipeline(year=CURRENT_YEAR):
     fielding_df=pull_fielding_components(year)
     time.sleep(2)
     catcher_df=pull_catcher_stats(year)
+    time.sleep(2)
+    sprint_df=pull_sprint_speed(year)
+    time.sleep(2)
+    poptime_df=pull_catcher_poptime_data(year)
 
     pm={"CF":"CF","LF":"LF","RF":"RF","SS":"SS","2B":"2B","3B":"3B","1B":"1B","C":"C","C-1B":"C","MI":"SS","OF":"CF"}
     if not oaa_df.empty: oaa_df["position"]=oaa_df["position"].map(pm).fillna(oaa_df["position"])
@@ -433,6 +479,22 @@ def run_pipeline(year=CURRENT_YEAR):
     merged=merged[merged["position"].isin(WEIGHTS.keys())].copy()
     if merged.empty: print("ERROR: No players."); return
 
+    # ── Merge physical tools — sprint speed for all, pop time for catchers ──
+    for col in ["sprint_speed","hp_to_1b","bolts","pop_time_2b","arm_strength_mph","exchange_time"]:
+        if col not in merged.columns: merged[col]=0.0
+    if not sprint_df.empty:
+        merged=pd.merge(merged,sprint_df.rename(columns={
+            "sprint_speed":"_ss","hp_to_1b":"_hp","bolts":"_bolts"
+        }),on="player_name",how="left")
+        merged["sprint_speed"]=merged["_ss"].fillna(0); merged["hp_to_1b"]=merged["_hp"].fillna(0); merged["bolts"]=merged["_bolts"].fillna(0)
+        merged=merged.drop(columns=["_ss","_hp","_bolts"])
+    if not poptime_df.empty:
+        merged=pd.merge(merged,poptime_df.rename(columns={
+            "pop_time_2b":"_pt","arm_strength_mph":"_arm","exchange_time":"_ex"
+        }),on="player_name",how="left")
+        merged["pop_time_2b"]=merged["_pt"].fillna(0); merged["arm_strength_mph"]=merged["_arm"].fillna(0); merged["exchange_time"]=merged["_ex"].fillna(0)
+        merged=merged.drop(columns=["_pt","_arm","_ex"])
+
     # compute() handles all normalization internally within each position pool
 
     merged=compute(merged)
@@ -466,6 +528,13 @@ def run_pipeline(year=CURRENT_YEAR):
                "rpm_runs":round(float(r.get("rpm_runs",0)),2),
                "rgfp_runs":round(float(r.get("rgfp_runs",0)),2),
                "innings":round(float(r.get("innings",0))),
+               # Physical tools (from Statcast)
+               "sprint_speed":round(float(r.get("sprint_speed",0)),1),
+               "hp_to_1b":round(float(r.get("hp_to_1b",0)),2),
+               "bolts":int(round(float(r.get("bolts",0)))),
+               "pop_time_2b":round(float(r.get("pop_time_2b",0)),2),
+               "arm_strength_mph":round(float(r.get("arm_strength_mph",0)),1),
+               "exchange_time":round(float(r.get("exchange_time",0)),2),
                "raw_dscore":round(float(r["raw_dscore"]),1),
                "adj_dscore":round(float(r["adj_dscore"]),1),
                "dwar":round(float(r["dwar"]),2),
@@ -479,8 +548,10 @@ def run_pipeline(year=CURRENT_YEAR):
     output={"meta":{"generated_at":datetime.utcnow().isoformat()+"Z","season":year},"rankings":rankings,"dwar_leaders":dwar_l}
     import os; script_dir=os.path.dirname(os.path.abspath(__file__))
     site_dir=os.path.join(script_dir,"dscore-site")
+    app_public=os.path.join(script_dir,"dscore-app","public")
     out_paths=[os.path.join(script_dir,"dscore_rankings.json")]
     if os.path.isdir(site_dir): out_paths.append(os.path.join(site_dir,"dscore_rankings.json"))
+    if os.path.isdir(app_public): out_paths.append(os.path.join(app_public,"dscore_rankings.json"))
     for p in out_paths:
         with open(p,"w") as f: json.dump(output,f,indent=2)
     total_p=sum(len(v) for v in rankings.values())
