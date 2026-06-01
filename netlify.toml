@@ -1,0 +1,18 @@
+# ─── Netlify deploy configuration for The Cutoff ─────────────────────────
+# Builds the Vite + React app in dscore-app/ and publishes the static output.
+# This config supersedes the manual settings in the Netlify dashboard.
+
+[build]
+  base    = "dscore-app"                     # cd into dscore-app before building
+  command = "npm install && npm run build"   # install deps + run Vite build
+  publish = "dist"                            # serve dscore-app/dist/
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# SPA fallback: any non-asset URL (e.g. /player/SS/1) serves index.html
+# so React Router can handle client-side routing.
+[[redirects]]
+  from   = "/*"
+  to     = "/index.html"
+  status = 200
