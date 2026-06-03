@@ -4,7 +4,7 @@
       "command": "npx",
       "args": ["-y", "@21st-dev/magic@latest"],
       "env": {
-        "API_KEY": "REPLACE_WITH_YOUR_KEY_FROM_https_21st_dev_magic_console"
+        "API_KEY": "GET-YOUR-KEY-FROM-https://21st.dev/magic/console"
       }
     },
     "shadcn-ui": {
