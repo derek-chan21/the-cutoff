@@ -6,6 +6,7 @@ import RankingsView from './pages/RankingsView';
 import PlayerProfile from './pages/PlayerProfile';
 import About from './pages/About';
 import Baserunning from './pages/Baserunning';
+import BaserunnerProfile from './pages/BaserunnerProfile';
 import Footer from './components/Footer';
 
 export default function App() {
@@ -20,6 +21,7 @@ export default function App() {
           <Route path="/player/:pos/:rank" element={<PlayerProfile />} />
           <Route path="/about" element={<About />} />
           <Route path="/baserunning" element={<Baserunning />} />
+          <Route path="/baserunner/:rank" element={<BaserunnerProfile />} />
         </Routes>
       </AnimatePresence>
       <Footer />

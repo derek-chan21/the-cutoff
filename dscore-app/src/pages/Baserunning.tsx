@@ -328,7 +328,8 @@ export default function Baserunning() {
                       whileInView={{ opacity: 1, x: 0 }}
                       viewport={{ once: true }}
                       transition={{ delay: Math.min(i * 0.02, 0.5), duration: 0.35 }}
-                      className={`border-b border-white/[0.05] hover:bg-gold/[0.04] transition-colors ${
+                      onClick={() => window.location.assign(`/baserunner/${p.rank}`)}
+                      className={`border-b border-white/[0.05] hover:bg-gold/[0.04] transition-colors cursor-pointer ${
                         i === 0 ? 'bg-gold/[0.05]' : ''
                       }`}
                       style={i === 0 ? { borderLeft: `2px solid ${team.primary}` } : {}}
@@ -405,7 +406,11 @@ function LeaderCard({ title, metric, description, runners, valueOf, emphasis = f
       <div className="font-serif italic text-[12px] text-text/65 leading-snug mb-4">{description}</div>
       <ol className="space-y-2">
         {runners.map((p, i) => (
-          <li key={p.player} className="flex items-baseline justify-between gap-3 py-1.5 border-b border-white/[0.04] last:border-b-0">
+          <li
+            key={p.player}
+            onClick={() => window.location.assign(`/baserunner/${p.rank}`)}
+            className="flex items-baseline justify-between gap-3 py-1.5 border-b border-white/[0.04] last:border-b-0 cursor-pointer hover:bg-gold/[0.04] -mx-2 px-2 rounded transition-colors"
+          >
             <div className="flex items-baseline gap-2.5 min-w-0">
               <span className={`font-mono text-[11px] flex-shrink-0 ${i === 0 ? 'text-gold' : 'text-muted'}`}>
                 {String(i + 1).padStart(2, '·')}
@@ -444,7 +449,11 @@ function PredictionPanel({ title, kicker, description, tint, runners }: {
       </p>
       <ol className="space-y-2">
         {runners.map((p, i) => (
-          <li key={p.player} className="flex items-baseline justify-between gap-3 py-2 border-b border-white/[0.04] last:border-b-0">
+          <li
+            key={p.player}
+            onClick={() => window.location.assign(`/baserunner/${p.rank}`)}
+            className="flex items-baseline justify-between gap-3 py-2 border-b border-white/[0.04] last:border-b-0 cursor-pointer hover:bg-gold/[0.04] -mx-2 px-2 rounded transition-colors"
+          >
             <div className="flex items-baseline gap-2.5 min-w-0">
               <span className={`font-mono text-[11px] flex-shrink-0 ${i === 0 ? tintCls : 'text-muted'}`}>
                 {String(i + 1).padStart(2, '·')}
