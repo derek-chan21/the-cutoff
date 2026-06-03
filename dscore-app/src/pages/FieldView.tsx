@@ -5,9 +5,10 @@ import { ChevronRight } from '../components/icons';
 import { useRankings } from '../data/useRankings';
 import type { Pos } from '../types';
 
-// Striking B&W baseball game photo from Pexels (verified hot-link-friendly).
-// Editorial, dramatic, classic — not a generic stadium snapshot.
-const HERO_PHOTO = 'https://images.pexels.com/photos/37040588/pexels-photo-37040588.jpeg?auto=compress&cs=tinysrgb&w=1800';
+// Editorial still-life: a vintage leather glove with baseballs. Pexels-hosted,
+// verified hot-link-friendly. No people, no team, no children — just the
+// objects of the sport. Reads like a New Yorker photograph.
+const HERO_PHOTO = 'https://images.pexels.com/photos/12783350/pexels-photo-12783350.jpeg?auto=compress&cs=tinysrgb&w=1800';
 
 const POSITIONS: { key: Pos | 'ALL'; label: string; full: string; group: string }[] = [
   { key: 'CF',  label: 'CF',  full: 'Center Field',  group: 'OUTFIELD' },
@@ -146,8 +147,8 @@ export default function FieldView() {
             </div>
             <figcaption className="mt-4 font-serif italic text-[12px] text-text/55 leading-relaxed">
               <span className="font-mono not-italic text-[9px] tracking-[0.25em] text-rust mr-2">PHOTO·01</span>
-              The game in monochrome — where defense is measured not in highlights
-              but in the runs it quietly saves.
+              Leather and stitch. The instruments by which a single run is saved
+              — or quietly, often invisibly, allowed.
             </figcaption>
           </motion.figure>
         </div>
