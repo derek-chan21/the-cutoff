@@ -1,9 +1,11 @@
 import io,json,re,time
 import pandas as pd
+import numpy as np
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
-from pybaseball import statcast_outs_above_average, statcast_sprint_speed, statcast_catcher_poptime
+from pybaseball import (statcast_outs_above_average, statcast_sprint_speed,
+                        statcast_catcher_poptime, statcast_outfielder_jump)
 
 CURRENT_YEAR=datetime.now().year
 # ─────────────────────────────────────────────────────────────────────────────
@@ -128,6 +130,29 @@ def pull_sprint_speed(year):
         return keep
     except Exception as e:
         print(f"    WARNING (sprint speed): {e}")
+        return pd.DataFrame()
+
+def pull_outfielder_jump(year):
+    """Statcast outfielder jump: reaction / burst / route distances (vs avg)."""
+    print(f"  Pulling outfielder jump for {year}...")
+    try:
+        df = statcast_outfielder_jump(year)
+        if df is None or df.empty:
+            return pd.DataFrame()
+        df = df.rename(columns={
+            'last_name, first_name': 'player_name',
+            'rel_league_reaction_distance': 'jump_reaction',
+            'rel_league_burst_distance':    'jump_burst',
+            'rel_league_routing_distance':  'jump_route',
+        })
+        df['player_name'] = df['player_name'].astype(str).str.strip()
+        keep = df[['player_name', 'jump_reaction', 'jump_burst', 'jump_route']].copy()
+        for col in ['jump_reaction', 'jump_burst', 'jump_route']:
+            keep[col] = pd.to_numeric(keep[col], errors='coerce').fillna(0)
+        print(f"    Got {len(keep)} outfielder jump entries.")
+        return keep
+    except Exception as e:
+        print(f"    WARNING (outfielder jump): {e}")
         return pd.DataFrame()
 
 def pull_catcher_poptime_data(year):
@@ -412,6 +437,8 @@ def run_pipeline(year=CURRENT_YEAR):
     sprint_df=pull_sprint_speed(year)
     time.sleep(2)
     poptime_df=pull_catcher_poptime_data(year)
+    time.sleep(2)
+    jump_df=pull_outfielder_jump(year)
 
     pm={"CF":"CF","LF":"LF","RF":"RF","SS":"SS","2B":"2B","3B":"3B","1B":"1B","C":"C","C-1B":"C","MI":"SS","OF":"CF"}
     if not oaa_df.empty: oaa_df["position"]=oaa_df["position"].map(pm).fillna(oaa_df["position"])
@@ -479,8 +506,9 @@ def run_pipeline(year=CURRENT_YEAR):
     merged=merged[merged["position"].isin(WEIGHTS.keys())].copy()
     if merged.empty: print("ERROR: No players."); return
 
-    # ── Merge physical tools — sprint speed for all, pop time for catchers ──
-    for col in ["sprint_speed","hp_to_1b","bolts","pop_time_2b","arm_strength_mph","exchange_time"]:
+    # ── Merge physical tools ──
+    for col in ["sprint_speed","hp_to_1b","bolts","pop_time_2b","arm_strength_mph",
+                "exchange_time","jump_reaction","jump_burst","jump_route"]:
         if col not in merged.columns: merged[col]=0.0
     if not sprint_df.empty:
         merged=pd.merge(merged,sprint_df.rename(columns={
@@ -494,10 +522,55 @@ def run_pipeline(year=CURRENT_YEAR):
         }),on="player_name",how="left")
         merged["pop_time_2b"]=merged["_pt"].fillna(0); merged["arm_strength_mph"]=merged["_arm"].fillna(0); merged["exchange_time"]=merged["_ex"].fillna(0)
         merged=merged.drop(columns=["_pt","_arm","_ex"])
+    if not jump_df.empty:
+        merged=pd.merge(merged,jump_df.rename(columns={
+            "jump_reaction":"_jr","jump_burst":"_jb","jump_route":"_jx"
+        }),on="player_name",how="left")
+        merged["jump_reaction"]=merged["_jr"].fillna(0); merged["jump_burst"]=merged["_jb"].fillna(0); merged["jump_route"]=merged["_jx"].fillna(0)
+        merged=merged.drop(columns=["_jr","_jb","_jx"])
 
     # compute() handles all normalization internally within each position pool
 
     merged=compute(merged)
+
+    # ── PREDICTION MODEL ─────────────────────────────────────────
+    # Predicts a player's D-Score from their PHYSICAL TOOLS ALONE
+    # (sprint speed, arm strength, pop time, OF jump, etc. + position).
+    # The residual (actual D-Score − predicted D-Score) tells us who is
+    # over-/under-performing what their athletic measurements would imply.
+    #
+    # Uses out-of-fold predictions (5-fold CV) so each player's score
+    # comes from a model that didn't train on them — prevents the
+    # "I'll perfectly predict myself" overfitting trap.
+    try:
+        from sklearn.linear_model import Ridge
+        from sklearn.preprocessing import StandardScaler
+        from sklearn.model_selection import cross_val_predict
+        from sklearn.pipeline import Pipeline
+
+        # Features = physical tools + position one-hot (no defensive results here!)
+        TOOL_COLS=["sprint_speed","hp_to_1b","bolts","pop_time_2b","arm_strength_mph",
+                   "exchange_time","jump_reaction","jump_burst","jump_route","innings"]
+        pos_dummies=pd.get_dummies(merged["position"],prefix="pos")
+        X=pd.concat([merged[TOOL_COLS].astype(float),pos_dummies.astype(float)],axis=1).fillna(0).values
+        y=merged["adj_dscore"].astype(float).values
+
+        model=Pipeline([("scaler",StandardScaler()),("ridge",Ridge(alpha=2.0))])
+        # Out-of-fold predictions so each player's predicted score is honest
+        if len(merged)>=10:
+            y_pred=cross_val_predict(model,X,y,cv=5)
+            y_pred=np.clip(y_pred,0,99)
+            merged["predicted_dscore"]=np.round(y_pred,1)
+            merged["dscore_gap"]=np.round(y-y_pred,1)
+            print(f"  Prediction model: trained on {len(merged)} players "
+                  f"(corr={np.corrcoef(y,y_pred)[0,1]:.3f})")
+        else:
+            merged["predicted_dscore"]=merged["adj_dscore"]
+            merged["dscore_gap"]=0.0
+    except Exception as e:
+        print(f"  Prediction model SKIPPED: {e}")
+        merged["predicted_dscore"]=merged["adj_dscore"]
+        merged["dscore_gap"]=0.0
 
     rankings={}
     for pos in WEIGHTS:
@@ -535,6 +608,12 @@ def run_pipeline(year=CURRENT_YEAR):
                "pop_time_2b":round(float(r.get("pop_time_2b",0)),2),
                "arm_strength_mph":round(float(r.get("arm_strength_mph",0)),1),
                "exchange_time":round(float(r.get("exchange_time",0)),2),
+               "jump_reaction":round(float(r.get("jump_reaction",0)),2),
+               "jump_burst":round(float(r.get("jump_burst",0)),2),
+               "jump_route":round(float(r.get("jump_route",0)),2),
+               # Prediction-model: expected D-Score from physical tools alone
+               "predicted_dscore":round(float(r.get("predicted_dscore",0)),1),
+               "dscore_gap":round(float(r.get("dscore_gap",0)),1),
                "raw_dscore":round(float(r["raw_dscore"]),1),
                "adj_dscore":round(float(r["adj_dscore"]),1),
                "dwar":round(float(r["dwar"]),2),

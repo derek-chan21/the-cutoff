@@ -8,6 +8,7 @@ import { getTeam, teamLogo } from '../data/teams';
 import BaseballLoader from '../components/BaseballLoader';
 import AnimatedCounter from '../components/AnimatedCounter';
 import PhysicalTools from '../components/PhysicalTools';
+import ToolsVsResults from '../components/ToolsVsResults';
 
 const POS_NAMES: Record<string, string> = {
   CF: 'Center Field', LF: 'Left Field', RF: 'Right Field',
@@ -287,6 +288,9 @@ export default function PlayerProfile() {
 
         {/* Physical tools — Statcast-measured raw athleticism */}
         <PhysicalTools player={player} />
+
+        {/* Tools vs Results — prediction model visualization */}
+        <ToolsVsResults player={player} />
 
         {/* Leaderboard */}
         <motion.div

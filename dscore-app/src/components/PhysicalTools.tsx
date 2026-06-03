@@ -29,19 +29,30 @@ function gradeLabel(percentile: number): string {
 
 export default function PhysicalTools({ player }: { player: Player }) {
   const isC = player.position === 'C';
+  const isOF = player.position === 'CF' || player.position === 'LF' || player.position === 'RF';
 
-  // Each position gets a different set of tools that matter for them
-  const tools = isC
-    ? [
-        { label: 'POP TIME (2B)',   value: player.pop_time_2b,      unit: 's',   key: 'pop_time_2b' as const,     desc: 'Catch → release → arrival at second base.' },
-        { label: 'ARM STRENGTH',    value: player.arm_strength_mph, unit: 'mph', key: 'arm_strength_mph' as const, desc: 'Max-effort throw velocity (mph).' },
-        { label: 'EXCHANGE TIME',   value: player.exchange_time,    unit: 's',   key: 'exchange_time' as const,    desc: 'Time from receiving to releasing the ball.' },
-      ]
-    : [
-        { label: 'SPRINT SPEED',    value: player.sprint_speed,     unit: ' ft/s', key: 'sprint_speed' as const,     desc: 'Top-end running speed (Statcast).' },
-        { label: 'HOME → 1B TIME',  value: player.hp_to_1b,         unit: 's',     key: 'hp_to_1b' as const,         desc: 'Time from contact to first base.' },
-        { label: 'BOLTS (30+ ft/s)',value: player.bolts,            unit: ' runs', key: 'sprint_speed' as const,     desc: 'Number of runs at 30+ ft/sec — pure burner indicator.' },
-      ];
+  // Each position group sees the tools that actually matter for the job
+  let tools: { label: string; value: number | undefined; unit: string; key: keyof typeof PERCENTILE_CUTOFFS; desc: string }[];
+  if (isC) {
+    tools = [
+      { label: 'POP TIME (2B)',   value: player.pop_time_2b,      unit: 's',   key: 'pop_time_2b',      desc: 'Catch → release → arrival at second base.' },
+      { label: 'ARM STRENGTH',    value: player.arm_strength_mph, unit: 'mph', key: 'arm_strength_mph', desc: 'Max-effort throw velocity (mph).' },
+      { label: 'EXCHANGE TIME',   value: player.exchange_time,    unit: 's',   key: 'exchange_time',    desc: 'Time from receiving to releasing the ball.' },
+    ];
+  } else if (isOF) {
+    tools = [
+      { label: 'SPRINT SPEED',    value: player.sprint_speed,     unit: ' ft/s', key: 'sprint_speed', desc: 'Top-end running speed (Statcast).' },
+      { label: 'REACTION (vs avg)',value: player.jump_reaction,   unit: ' ft',   key: 'sprint_speed', desc: 'Distance covered in the first 1.5 sec, vs an average outfielder.' },
+      { label: 'BURST (vs avg)',  value: player.jump_burst,       unit: ' ft',   key: 'sprint_speed', desc: 'Acceleration distance from sec 1.5 to 3.0, vs avg.' },
+      { label: 'ROUTE (vs avg)',  value: player.jump_route,       unit: ' ft',   key: 'sprint_speed', desc: 'Route efficiency — how directly the fielder runs.' },
+    ];
+  } else {
+    tools = [
+      { label: 'SPRINT SPEED',    value: player.sprint_speed,     unit: ' ft/s', key: 'sprint_speed', desc: 'Top-end running speed (Statcast).' },
+      { label: 'HOME → 1B TIME',  value: player.hp_to_1b,         unit: 's',     key: 'hp_to_1b',     desc: 'Time from contact to first base.' },
+      { label: 'BOLTS (30+ ft/s)',value: player.bolts,            unit: ' runs', key: 'sprint_speed', desc: 'Number of runs at 30+ ft/sec — pure burner indicator.' },
+    ];
+  }
 
   // Don't show panel if all values are zero (no data)
   const hasData = tools.some((t) => t.value && t.value > 0);

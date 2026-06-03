@@ -27,7 +27,7 @@ const PEXELS_SPECIFIC: Record<string, string> = {
   SF:  px(15322763),  // Oracle Park
   BAL: px(569848),    // Camden Yards
   COL: px(6982867),   // Coors Field
-  PIT: px(8492244),   // PNC Park / Pittsburgh
+  PIT: px(31620262),  // PNC Park / Pittsburgh (Clemente Bridge view)
   STL: px(8043400),   // Busch Stadium
   SD:  px(14547696),  // Petco Park
   MIN: px(28772775),  // Target Field

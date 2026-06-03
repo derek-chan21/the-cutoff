@@ -39,6 +39,13 @@ export interface Player {
   pop_time_2b?: number;        // catchers: pop time to 2B
   arm_strength_mph?: number;   // catchers: max-effort arm velocity
   exchange_time?: number;      // catchers: receive→release time
+  jump_reaction?: number;      // OF: reaction distance vs avg (ft)
+  jump_burst?: number;         // OF: burst distance vs avg (ft)
+  jump_route?: number;         // OF: route efficiency vs avg (ft)
+
+  // Prediction model — expected D-Score from physical tools alone
+  predicted_dscore?: number;
+  dscore_gap?: number;         // actual − predicted (positive = overperformer)
 
   // Display
   innings: number;
