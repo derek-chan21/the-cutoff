@@ -54,11 +54,33 @@ export default function FieldView() {
           Cream typography, photo as ONE element (not full backdrop),
           generous whitespace. WSJ / Athletic, not movie poster.
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative max-w-[1280px] mx-auto px-7 pt-12 pb-20">
+      <section className="relative max-w-[1280px] mx-auto px-7 pt-12 pb-20 overflow-hidden">
+        {/* ── Premium ambient accents (inspired by 21st.dev hero pattern) ── */}
+        {/* Slow-rotating ring behind the right column */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1, rotate: 360 }}
+          transition={{ opacity: { duration: 1.5, delay: 0.5 }, rotate: { duration: 60, repeat: Infinity, ease: 'linear' } }}
+          className="absolute top-[20%] right-[-8%] w-[480px] h-[480px] rounded-full border border-gold/15 pointer-events-none hidden lg:block"
+        />
+        {/* Pulsing accent dot, bottom-right */}
+        <motion.div
+          animate={{ scale: [1, 1.25, 1], opacity: [0.18, 0.32, 0.18] }}
+          transition={{ duration: 6, repeat: Infinity }}
+          className="absolute bottom-[12%] right-[8%] w-[120px] h-[120px] rounded-full bg-gold blur-3xl pointer-events-none"
+        />
+        {/* Draw-in top accent line */}
+        <motion.div
+          initial={{ scaleX: 0 }} animate={{ scaleX: 1 }}
+          transition={{ duration: 1.4, ease: 'easeOut' }}
+          style={{ originX: 0 }}
+          className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-gold via-rust to-transparent pointer-events-none"
+        />
+
         {/* Top eyebrow rule */}
         <motion.div
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
-          className="flex items-center justify-between border-y border-gold/25 py-3 mb-14 font-mono text-[13px] tracking-[0.22em] text-text/70"
+          className="relative flex items-center justify-between border-y border-gold/25 py-3 mb-14 font-mono text-[13px] tracking-[0.22em] text-text/70"
         >
           <span>VOL. I · ISSUE 01</span>
           <span className="hidden md:inline">A DEFENSIVE REGISTER · 2026 MLB SEASON</span>
@@ -68,18 +90,24 @@ export default function FieldView() {
           </span>
         </motion.div>
 
+        {/* ── Premium pulsing badge above the headline (Magic-inspired) ── */}
+        <motion.div
+          initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.35, duration: 0.6 }}
+          className="relative inline-flex items-center gap-2.5 mb-7 px-4 py-2 rounded-full bg-gold/10 border border-gold/30"
+        >
+          <motion.span
+            animate={{ scale: [1, 1.4, 1] }}
+            transition={{ duration: 2, repeat: Infinity }}
+            className="w-1.5 h-1.5 rounded-full bg-gold"
+          />
+          <span className="font-mono text-[12px] tracking-[0.22em] text-gold">FEATURE · DEFENSIVE ANALYTICS</span>
+        </motion.div>
+
         {/* Main grid */}
-        <div className="grid lg:grid-cols-[1.15fr_1fr] gap-12 lg:gap-16 items-center">
+        <div className="relative grid lg:grid-cols-[1.15fr_1fr] gap-12 lg:gap-16 items-center">
           {/* LEFT — editorial typography */}
           <div>
-            <motion.div
-              initial={{ y: 14, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.3, duration: 0.7 }}
-              className="font-mono text-[13px] tracking-[0.3em] text-rust mb-6"
-            >
-              FEATURE · ANALYTICS
-            </motion.div>
-
             <motion.h1
               initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.4, duration: 0.8, ease: [0.34, 1.1, 0.64, 1] }}
@@ -250,17 +278,29 @@ export default function FieldView() {
   );
 }
 
-// ── Editorial fact (a single labeled fact with a hairline) ─────────
+// ── Editorial fact (hover-lift, with a draw-in accent rule) ─────────
 function Fact({ label, value, sub, emphasis = false }: {
   label: string; value: string; sub: string; emphasis?: boolean;
 }) {
   return (
-    <div className="border-l-2 border-gold/30 pl-5">
-      <div className="font-mono text-[13px] tracking-[0.22em] text-muted mb-2">{label}</div>
-      <div className={`font-serif text-[26px] leading-[1.05] mb-1 truncate ${emphasis ? 'text-gold' : 'text-cream'}`}>
-        {value}
+    <motion.div
+      whileHover={{ y: -4 }}
+      transition={{ duration: 0.25 }}
+      className="relative pl-5 cursor-default group"
+    >
+      {/* Animated accent rule — short tick on top, full bar on the left */}
+      <motion.span
+        className={`absolute top-0 left-0 w-1.5 h-1 ${emphasis ? 'bg-gold' : 'bg-gold/60'} group-hover:w-3 transition-all`}
+      />
+      <span className={`absolute top-0 left-0 bottom-0 w-[2px] ${emphasis ? 'bg-gold' : 'bg-gold/30'} group-hover:bg-gold transition-colors`} />
+
+      <div className="pt-3">
+        <div className="font-mono text-[13px] tracking-[0.22em] text-muted mb-2 group-hover:text-text/85 transition-colors">{label}</div>
+        <div className={`font-serif text-[28px] leading-[1.05] mb-1 truncate ${emphasis ? 'text-gold' : 'text-cream'}`}>
+          {value}
+        </div>
+        <div className="font-serif italic text-[13px] text-text/65 leading-snug">{sub}</div>
       </div>
-      <div className="font-serif italic text-[13px] text-text/65 leading-snug">{sub}</div>
-    </div>
+    </motion.div>
   );
 }
