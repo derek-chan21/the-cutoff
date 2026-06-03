@@ -71,6 +71,8 @@ export interface Baserunner {
   sprint_speed: number; // Statcast (ft/sec)
   pa: number;
   b_score: number;      // 0-99 composite (wBsR 55 + SB% 25 + Spd 20)
+  predicted_bscore?: number;  // expected B-Score from sprint speed + attempts + PA
+  bscore_gap?: number;        // actual − predicted (positive = smart > tools)
 }
 
 // ── Top-level data shape ─────────────────────────────────

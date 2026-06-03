@@ -679,11 +679,16 @@ def run_pipeline(year=CURRENT_YEAR):
         br=baserunning_df.copy()
         # SB success rate (with prior to avoid divide-by-zero blowups on small samples)
         br["sb_success"]=(br["sb"]/(br["sb"]+br["cs"]+3)*100).round(1)  # +3 prior
-        # Sprint speed lookup from Statcast (if pulled)
+        # Sprint speed lookup from Statcast.
+        # Statcast names already arrive as "Last, First" (the column was
+        # called 'last_name, first_name' before we renamed it).
+        # FanGraphs baserunning names were converted to "Last, First" by
+        # to_last_first() in pull_baserunning(). So the two should match
+        # by raw string — no further conversion needed.
         sprint_map={}
         if not sprint_df.empty:
             for _,row in sprint_df.iterrows():
-                key=to_last_first(str(row["player_name"]).strip())
+                key=str(row["player_name"]).strip()
                 sprint_map[key]=float(row.get("sprint_speed",0) or 0)
         br["sprint_speed"]=br["player_name"].map(lambda n: sprint_map.get(n, 0.0))
         # Normalize the 3 inputs within the baserunner pool
@@ -695,6 +700,35 @@ def run_pipeline(year=CURRENT_YEAR):
         n_spd =_normvec(br["spd"])
         # B-Score formula: wBsR 55% + SB Success 25% + Speed 20%
         br["b_score"]=(n_wbsr*0.55+n_succ*0.25+n_spd*0.20).clip(0,99).round(1)
+
+        # ── BASERUNNING PREDICTION MODEL ─────────────────────────
+        # Predicts B-Score from raw physical inputs (sprint speed, plate
+        # appearances, attempt rate) WITHOUT using FanGraphs Spd or
+        # wBsR — so the model is honest about how much "smarts vs raw
+        # tools" each runner brings.
+        try:
+            from sklearn.linear_model import Ridge
+            from sklearn.preprocessing import StandardScaler
+            from sklearn.model_selection import cross_val_predict
+            from sklearn.pipeline import Pipeline
+            br["attempt_rate"]=(br["sb"]+br["cs"])/br["pa"].clip(lower=1)
+            FEAT=["sprint_speed","attempt_rate","pa"]
+            X=br[FEAT].astype(float).fillna(0).values
+            y=br["b_score"].astype(float).values
+            if len(br)>=10:
+                model=Pipeline([("scaler",StandardScaler()),("ridge",Ridge(alpha=2.0))])
+                y_pred=cross_val_predict(model,X,y,cv=5)
+                y_pred=np.clip(y_pred,0,99)
+                br["predicted_bscore"]=np.round(y_pred,1)
+                br["bscore_gap"]=np.round(y-y_pred,1)
+                print(f"  Baserunning model: trained on {len(br)} runners "
+                      f"(corr={np.corrcoef(y,y_pred)[0,1]:.3f})")
+            else:
+                br["predicted_bscore"]=br["b_score"]; br["bscore_gap"]=0.0
+        except Exception as e:
+            print(f"  Baserunning model SKIPPED: {e}")
+            br["predicted_bscore"]=br["b_score"]; br["bscore_gap"]=0.0
+
         br=br.sort_values("b_score",ascending=False).reset_index(drop=True)
         for i,row in br.iterrows():
             mid=id_map.get(to_first_last(row["player_name"]),"") or id_map.get(row["player_name"],"")
@@ -712,6 +746,8 @@ def run_pipeline(year=CURRENT_YEAR):
                 "sprint_speed":round(float(row.get("sprint_speed",0)),1),
                 "pa":int(row["pa"]),
                 "b_score":round(float(row["b_score"]),1),
+                "predicted_bscore":round(float(row.get("predicted_bscore",row["b_score"])),1),
+                "bscore_gap":round(float(row.get("bscore_gap",0)),1),
             })
         print(f"  Baserunning rankings built: {len(baserunning_list)} qualified runners")
 
