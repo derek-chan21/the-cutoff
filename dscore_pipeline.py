@@ -178,6 +178,47 @@ def pull_catcher_poptime_data(year):
         print(f"    WARNING (pop time): {e}")
         return pd.DataFrame()
 
+def pull_baserunning(year):
+    """FanGraphs baserunning: wBsR (weighted base running runs), SB, CS, Speed Score."""
+    print(f"  Pulling baserunning data for {year}...")
+    try:
+        url = (f"https://www.fangraphs.com/api/leaders/major-league/data"
+               f"?pos=all&stats=bat&lg=al,nl&qual=50&season={year}&season1={year}"
+               f"&startdate=&enddate=&team=0&pageitems=500&pagenum=1&type=2")
+        hdrs = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"}
+        r = requests.get(url, headers=hdrs, timeout=15)
+        rows = json.loads(r.text).get('data', [])
+        if not rows:
+            return pd.DataFrame()
+        def fnum(p, k, d=0):
+            v = p.get(k, d)
+            try: return float(v) if v not in (None, '') else 0.0
+            except: return 0.0
+        result = []
+        for p in rows:
+            raw = p.get('PlayerName', '') or re.sub(r'<[^>]+>', '', p.get('Name', '')).strip()
+            name = re.sub(r'<[^>]+>', '', str(raw)).strip()
+            if not name: continue
+            team_raw = re.sub(r'<[^>]+>', '', str(p.get('TeamNameAbb', '') or '')).strip()
+            team = team_raw if team_raw and team_raw != '- - -' else ''
+            result.append({
+                'player_name': to_last_first(name),
+                'team': team,
+                'wbsr':   round(fnum(p, 'wBsR'), 2),
+                'sb':     int(fnum(p, 'SB')),
+                'cs':     int(fnum(p, 'CS')),
+                'spd':    round(fnum(p, 'Spd'), 1),
+                'pa':     int(fnum(p, 'PA')),
+            })
+        df = pd.DataFrame(result)
+        # Deduplicate by player_name (keep highest PA — handles "2 Tms" rows)
+        df = df.sort_values('pa', ascending=False).drop_duplicates(subset=['player_name'], keep='first')
+        print(f"    Got {len(df)} baserunning entries.")
+        return df
+    except Exception as e:
+        print(f"    WARNING (baserunning): {e}")
+        return pd.DataFrame()
+
 def pull_catcher_stats(year):
     """Pull comprehensive catcher defensive metrics from FanGraphs — all components in runs.
     Returns: frv (framing), arm_runs (throwing), block_runs (blocking), cera_runs (game-calling),
@@ -439,6 +480,8 @@ def run_pipeline(year=CURRENT_YEAR):
     poptime_df=pull_catcher_poptime_data(year)
     time.sleep(2)
     jump_df=pull_outfielder_jump(year)
+    time.sleep(2)
+    baserunning_df=pull_baserunning(year)
 
     pm={"CF":"CF","LF":"LF","RF":"RF","SS":"SS","2B":"2B","3B":"3B","1B":"1B","C":"C","C-1B":"C","MI":"SS","OF":"CF"}
     if not oaa_df.empty: oaa_df["position"]=oaa_df["position"].map(pm).fillna(oaa_df["position"])
@@ -624,7 +667,58 @@ def run_pipeline(year=CURRENT_YEAR):
 
     all_p=[p for pl in rankings.values() for p in pl]
     dwar_l=sorted(all_p,key=lambda x:x["dwar"],reverse=True)[:30]
-    output={"meta":{"generated_at":datetime.utcnow().isoformat()+"Z","season":year},"rankings":rankings,"dwar_leaders":dwar_l}
+
+    # ── Baserunning rankings ─────────────────────────────────────
+    # Build a separate leaderboard. B-Score (Baserunning Score) is a
+    # 0-99 composite weighting wBsR (the headline runs metric), stolen
+    # base success rate, and FanGraphs Speed Score. Joined to MLB IDs
+    # for headshots; sprint speed pulled across from Statcast where
+    # available so each baserunner shows their measured top-end speed.
+    baserunning_list=[]
+    if not baserunning_df.empty:
+        br=baserunning_df.copy()
+        # SB success rate (with prior to avoid divide-by-zero blowups on small samples)
+        br["sb_success"]=(br["sb"]/(br["sb"]+br["cs"]+3)*100).round(1)  # +3 prior
+        # Sprint speed lookup from Statcast (if pulled)
+        sprint_map={}
+        if not sprint_df.empty:
+            for _,row in sprint_df.iterrows():
+                key=to_last_first(str(row["player_name"]).strip())
+                sprint_map[key]=float(row.get("sprint_speed",0) or 0)
+        br["sprint_speed"]=br["player_name"].map(lambda n: sprint_map.get(n, 0.0))
+        # Normalize the 3 inputs within the baserunner pool
+        def _normvec(s):
+            mn,mx=s.min(),s.max()
+            return pd.Series(50.0,index=s.index) if mx==mn else ((s-mn)/(mx-mn)*100).round(1)
+        n_wbsr=_normvec(br["wbsr"])
+        n_succ=_normvec(br["sb_success"])
+        n_spd =_normvec(br["spd"])
+        # B-Score formula: wBsR 55% + SB Success 25% + Speed 20%
+        br["b_score"]=(n_wbsr*0.55+n_succ*0.25+n_spd*0.20).clip(0,99).round(1)
+        br=br.sort_values("b_score",ascending=False).reset_index(drop=True)
+        for i,row in br.iterrows():
+            mid=id_map.get(to_first_last(row["player_name"]),"") or id_map.get(row["player_name"],"")
+            baserunning_list.append({
+                "rank":i+1,
+                "player":row["player_name"],
+                "team":row.get("team",""),
+                "mlb_id":mid,
+                "headshot":hs_url(mid),
+                "wbsr":round(float(row["wbsr"]),2),
+                "sb":int(row["sb"]),
+                "cs":int(row["cs"]),
+                "sb_success":round(float(row["sb_success"]),1),
+                "spd":round(float(row["spd"]),1),
+                "sprint_speed":round(float(row.get("sprint_speed",0)),1),
+                "pa":int(row["pa"]),
+                "b_score":round(float(row["b_score"]),1),
+            })
+        print(f"  Baserunning rankings built: {len(baserunning_list)} qualified runners")
+
+    output={"meta":{"generated_at":datetime.utcnow().isoformat()+"Z","season":year},
+            "rankings":rankings,
+            "dwar_leaders":dwar_l,
+            "baserunning_rankings":baserunning_list}
     import os; script_dir=os.path.dirname(os.path.abspath(__file__))
     site_dir=os.path.join(script_dir,"dscore-site")
     app_public=os.path.join(script_dir,"dscore-app","public")

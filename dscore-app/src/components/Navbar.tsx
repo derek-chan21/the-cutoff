@@ -4,6 +4,7 @@ export default function Navbar() {
   const { pathname } = useLocation();
   const isHome = pathname === '/';
   const isAbout = pathname === '/about';
+  const isBR = pathname === '/baserunning';
 
   const linkClass = (active: boolean) =>
     `relative font-mono text-[13px] tracking-[0.16em] uppercase transition-colors ${
@@ -28,6 +29,10 @@ export default function Navbar() {
           <Link to="/" className={linkClass(isHome)}>
             Rankings
             {isHome && <span className="absolute -bottom-[6px] left-0 right-0 h-[1px] bg-gold" />}
+          </Link>
+          <Link to="/baserunning" className={linkClass(isBR)}>
+            Baserunning
+            {isBR && <span className="absolute -bottom-[6px] left-0 right-0 h-[1px] bg-gold" />}
           </Link>
           <Link to="/about" className={linkClass(isAbout)}>
             About

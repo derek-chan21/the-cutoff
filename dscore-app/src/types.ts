@@ -56,8 +56,26 @@ export interface Player {
   description: string;
 }
 
+// ── Baserunner record ────────────────────────────────────
+export interface Baserunner {
+  rank: number;
+  player: string;       // "Last, First"
+  team: string;
+  mlb_id: number | string;
+  headshot: string;
+  wbsr: number;         // weighted Base Running runs (FanGraphs)
+  sb: number;
+  cs: number;
+  sb_success: number;   // SB% adjusted with a 3-attempt prior
+  spd: number;          // FanGraphs Speed Score
+  sprint_speed: number; // Statcast (ft/sec)
+  pa: number;
+  b_score: number;      // 0-99 composite (wBsR 55 + SB% 25 + Spd 20)
+}
+
 // ── Top-level data shape ─────────────────────────────────
 export interface RankingsData {
   meta: { generated_at: string; season: number };
   rankings: Record<Pos, Player[]>;
+  baserunning_rankings?: Baserunner[];
 }
