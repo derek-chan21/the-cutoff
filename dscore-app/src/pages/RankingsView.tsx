@@ -63,12 +63,12 @@ export default function RankingsView() {
     else { setSortCol(col); setSortAsc(false); }
   };
   const arrow = (col: SortCol) =>
-    sortCol !== col ? <span className="text-muted ml-1 text-[8px] opacity-50">⬍</span>
-                    : <span className="ml-1 text-[8px] text-gold">{sortAsc ? '▲' : '▼'}</span>;
+    sortCol !== col ? <span className="text-muted ml-1 text-[13px] opacity-50">⬍</span>
+                    : <span className="ml-1 text-[13px] text-gold">{sortAsc ? '▲' : '▼'}</span>;
   const SortableHeader = ({ col, label }: { col: SortCol; label: string }) => (
     <th
       onClick={() => setSort(col)}
-      className={`text-right cursor-pointer select-none whitespace-nowrap transition-colors px-3 py-3 font-mono text-[9px] tracking-[0.16em] font-normal border-b border-white/[0.06] ${
+      className={`text-right cursor-pointer select-none whitespace-nowrap transition-colors px-3 py-3 font-mono text-[13px] tracking-[0.16em] font-normal border-b border-white/[0.06] ${
         sortCol === col ? 'text-gold' : 'text-muted hover:text-text'
       }`}
     >
@@ -87,7 +87,7 @@ export default function RankingsView() {
       {/* Back button */}
       <Link
         to="/"
-        className="inline-flex items-center gap-2 font-mono text-[10px] text-gold tracking-[0.18em]
+        className="inline-flex items-center gap-2 font-mono text-[13px] text-gold tracking-[0.18em]
                    glass hover:glow-gold hover:-translate-x-1 transition-all px-4 py-2 rounded-full no-underline mb-7"
       >
         <ArrowLeft size={12} />
@@ -97,22 +97,22 @@ export default function RankingsView() {
       {/* Header */}
       <div className="flex items-end justify-between gap-6 mb-7 pb-5 border-b border-gold/15 flex-wrap">
         <div className="flex-1 min-w-[200px]">
-          <div className="font-mono text-[10px] text-gold tracking-[0.22em] mb-2 flex items-center gap-2">
+          <div className="font-mono text-[13px] text-gold tracking-[0.22em] mb-2 flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-gold pulse-dot glow-gold" />
             VIEWING POSITION
           </div>
           <div className="font-display text-[44px] leading-none text-gold">
             {POS_NAMES[filterPos] || filterPos}
           </div>
-          <div className="font-mono text-[10px] text-muted2 mt-3 tracking-[0.1em]">
+          <div className="font-mono text-[13px] text-muted2 mt-3 tracking-[0.1em]">
             {players.length} players · sorted by {sortCol.toUpperCase()} {sortAsc ? '▲' : '▼'}
           </div>
         </div>
         <div>
-          <div className="font-mono text-[9px] tracking-[0.2em] text-muted mb-2">TEAM FILTER</div>
+          <div className="font-mono text-[13px] tracking-[0.2em] text-muted mb-2">TEAM FILTER</div>
           <select
             value={team} onChange={(e) => setTeam(e.target.value)}
-            className="appearance-none glass text-text font-mono text-[11px]
+            className="appearance-none glass text-text font-mono text-[13px]
                        px-4 py-2.5 rounded-lg min-w-[200px] cursor-pointer outline-none
                        hover:border-gold/40 focus:border-gold focus:glow-gold transition-all"
             style={{ background: 'rgba(255,255,255,0.04)' }}
@@ -128,9 +128,9 @@ export default function RankingsView() {
         <table className="w-full border-collapse">
           <thead>
             <tr>
-              <th className="text-left px-3 py-3 font-mono text-[9px] tracking-[0.16em] text-muted font-normal border-b border-white/[0.06]">#</th>
-              <th className="text-left px-3 py-3 font-mono text-[9px] tracking-[0.16em] text-muted font-normal border-b border-white/[0.06]">Player</th>
-              {filterPos === 'ALL' && <th className="text-right px-3 py-3 font-mono text-[9px] tracking-[0.16em] text-muted font-normal border-b border-white/[0.06]">POS</th>}
+              <th className="text-left px-3 py-3 font-mono text-[13px] tracking-[0.16em] text-muted font-normal border-b border-white/[0.06]">#</th>
+              <th className="text-left px-3 py-3 font-mono text-[13px] tracking-[0.16em] text-muted font-normal border-b border-white/[0.06]">Player</th>
+              {filterPos === 'ALL' && <th className="text-right px-3 py-3 font-mono text-[13px] tracking-[0.16em] text-muted font-normal border-b border-white/[0.06]">POS</th>}
               {isC ? (
                 <>
                   <SortableHeader col="frv" label="FRV" />
@@ -184,7 +184,7 @@ function PlayerRow({ p, idx, showPos, isC }: { p: Player; idx: number; showPos: 
       style={idx === 0 ? { borderLeft: `2px solid ${team.primary}` } : {}}
       onClick={() => window.location.assign(`/player/${p.position}/${p.rank}`)}
     >
-      <td className="px-3 py-3 w-[42px] text-center font-mono text-[11px] text-muted">
+      <td className="px-3 py-3 w-[42px] text-center font-mono text-[13px] text-muted">
         {idx === 0 ? <span className="text-gold font-semibold text-gold">#1</span> : `#${idx + 1}`}
       </td>
       <td className="px-3 py-3">
@@ -196,24 +196,24 @@ function PlayerRow({ p, idx, showPos, isC }: { p: Player; idx: number; showPos: 
           )}
           <div>
             <div className="text-sm font-medium">{p.player}</div>
-            <div className="text-[11px] text-muted2 font-mono tracking-wide">{p.team}{showPos && ` · ${p.position}`}</div>
+            <div className="text-[13px] text-muted2 font-mono tracking-wide">{p.team}{showPos && ` · ${p.position}`}</div>
           </div>
         </div>
       </td>
-      {showPos && <td className="px-3 py-3 text-center font-mono text-[11px] text-muted2">{p.position}</td>}
+      {showPos && <td className="px-3 py-3 text-center font-mono text-[13px] text-muted2">{p.position}</td>}
       {isC ? (
         <>
-          <td className="px-3 py-3 text-right font-mono text-[12.5px] text-gold">{fmt(p.frv || 0)}</td>
-          <td className="px-3 py-3 text-right font-mono text-[12.5px] text-muted2">{fmt(p.arm_runs || 0)}</td>
-          <td className="px-3 py-3 text-right font-mono text-[12.5px] text-muted2">{fmt(p.block_runs || 0)}</td>
-          <td className="px-3 py-3 text-right font-mono text-[12.5px] text-muted2">{fmt(p.cera_runs || 0)}</td>
-          <td className="px-3 py-3 text-right font-mono text-[12.5px] text-muted2">{fmt(p.drs)}</td>
+          <td className="px-3 py-3 text-right font-mono text-[14px] text-gold">{fmt(p.frv || 0)}</td>
+          <td className="px-3 py-3 text-right font-mono text-[14px] text-muted2">{fmt(p.arm_runs || 0)}</td>
+          <td className="px-3 py-3 text-right font-mono text-[14px] text-muted2">{fmt(p.block_runs || 0)}</td>
+          <td className="px-3 py-3 text-right font-mono text-[14px] text-muted2">{fmt(p.cera_runs || 0)}</td>
+          <td className="px-3 py-3 text-right font-mono text-[14px] text-muted2">{fmt(p.drs)}</td>
         </>
       ) : (
         <>
-          <td className="px-3 py-3 text-right font-mono text-[12.5px] text-gold">{(p.oaa >= 0 ? '+' : '') + p.oaa}</td>
-          <td className="px-3 py-3 text-right font-mono text-[12.5px] text-muted2">{fmt(p.arm_runs || 0)}</td>
-          <td className="px-3 py-3 text-right font-mono text-[12.5px] text-muted2">{fmt(p.drs)}</td>
+          <td className="px-3 py-3 text-right font-mono text-[14px] text-gold">{(p.oaa >= 0 ? '+' : '') + p.oaa}</td>
+          <td className="px-3 py-3 text-right font-mono text-[14px] text-muted2">{fmt(p.arm_runs || 0)}</td>
+          <td className="px-3 py-3 text-right font-mono text-[14px] text-muted2">{fmt(p.drs)}</td>
         </>
       )}
       <td className={`px-3 py-3 text-right font-display text-[21px] ${

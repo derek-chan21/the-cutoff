@@ -58,7 +58,7 @@ export default function FieldView() {
         {/* Top eyebrow rule */}
         <motion.div
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
-          className="flex items-center justify-between border-y border-gold/25 py-3 mb-14 font-mono text-[10px] tracking-[0.22em] text-text/70"
+          className="flex items-center justify-between border-y border-gold/25 py-3 mb-14 font-mono text-[13px] tracking-[0.22em] text-text/70"
         >
           <span>VOL. I · ISSUE 01</span>
           <span className="hidden md:inline">A DEFENSIVE REGISTER · 2026 MLB SEASON</span>
@@ -75,7 +75,7 @@ export default function FieldView() {
             <motion.div
               initial={{ y: 14, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.3, duration: 0.7 }}
-              className="font-mono text-[10px] tracking-[0.3em] text-rust mb-6"
+              className="font-mono text-[13px] tracking-[0.3em] text-rust mb-6"
             >
               FEATURE · ANALYTICS
             </motion.div>
@@ -93,7 +93,7 @@ export default function FieldView() {
             <motion.p
               initial={{ y: 14, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.6, duration: 0.6 }}
-              className="font-body text-[16px] leading-[1.65] text-text/85 max-w-[520px] mb-3 font-light"
+              className="font-body text-[16px] leading-[1.65] text-text/85 max-w-[520px] mb-3"
             >
               The D-Score is a single, position-aware number that combines every
               defensive skill — range, arm, blocking, framing, and game-calling —
@@ -116,14 +116,14 @@ export default function FieldView() {
             >
               <button
                 onClick={() => document.getElementById('positions')?.scrollIntoView({ behavior: 'smooth' })}
-                className="group inline-flex items-center gap-3 px-7 py-3.5 rounded-full font-mono text-[11px] tracking-[0.18em] bg-gold text-bg hover:bg-cream transition-all"
+                className="group inline-flex items-center gap-3 px-7 py-3.5 rounded-full font-mono text-[13px] tracking-[0.18em] bg-gold text-bg hover:bg-cream transition-all"
               >
                 BEGIN READING
                 <ChevronRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
               </button>
               <button
                 onClick={() => pick('ALL')}
-                className="font-mono text-[11px] tracking-[0.18em] text-text/70 hover:text-cream transition-colors underline underline-offset-4 decoration-gold/30 hover:decoration-gold"
+                className="font-mono text-[13px] tracking-[0.18em] text-text/70 hover:text-cream transition-colors underline underline-offset-4 decoration-gold/30 hover:decoration-gold"
               >
                 OR JUMP TO LEAGUE INDEX
               </button>
@@ -145,8 +145,8 @@ export default function FieldView() {
               />
               <div className="absolute inset-0 bg-gradient-to-tr from-rust/10 via-transparent to-gold/10 mix-blend-overlay pointer-events-none" />
             </div>
-            <figcaption className="mt-4 font-serif italic text-[12px] text-text/55 leading-relaxed">
-              <span className="font-mono not-italic text-[9px] tracking-[0.25em] text-rust mr-2">PHOTO·01</span>
+            <figcaption className="mt-4 font-serif italic text-[13px] text-text/55 leading-relaxed">
+              <span className="font-mono not-italic text-[13px] tracking-[0.25em] text-rust mr-2">PHOTO·01</span>
               Leather and stitch. The instruments by which a single run is saved
               — or quietly, often invisibly, allowed.
             </figcaption>
@@ -178,7 +178,7 @@ export default function FieldView() {
           className="flex items-end justify-between gap-6 mb-10 border-t border-gold/20 pt-10 flex-wrap"
         >
           <div>
-            <div className="font-mono text-[10px] tracking-[0.28em] text-rust mb-3">CHAPTER ONE</div>
+            <div className="font-mono text-[13px] tracking-[0.28em] text-rust mb-3">CHAPTER ONE</div>
             <h2 className="font-serif text-[clamp(40px,5vw,68px)] leading-[1] tracking-[-0.01em] text-cream">
               Select a <span className="italic text-gold">position</span>.
             </h2>
@@ -206,18 +206,18 @@ export default function FieldView() {
                 className="group relative glass rounded-xl p-6 text-left overflow-hidden hover:border-gold/40 transition-all"
               >
                 <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-gold to-transparent opacity-40 group-hover:opacity-80 transition-opacity" />
-                <div className="font-mono text-[9px] tracking-[0.22em] text-muted mb-3">{p.group}</div>
+                <div className="font-mono text-[13px] tracking-[0.22em] text-muted mb-3">{p.group}</div>
                 <div className="font-display text-[64px] leading-none text-cream mb-2 group-hover:text-gold transition-colors">
                   {p.label}
                 </div>
                 <div className="font-serif italic text-[14px] text-text/80 mb-4">{p.full}</div>
                 {top && (
                   <div className="pt-3 border-t border-gold/15">
-                    <div className="font-mono text-[8px] text-muted tracking-[0.18em] mb-1">LEADER</div>
-                    <div className="font-body text-[12px] text-text/90 truncate">
+                    <div className="font-mono text-[13px] text-muted tracking-[0.18em] mb-1">LEADER</div>
+                    <div className="font-body text-[13px] text-text/90 truncate">
                       {top.player.split(',').reverse().join(' ').trim()}
                     </div>
-                    <div className="font-mono text-[10px] text-gold mt-1">{top.adj_dscore} D-SCORE</div>
+                    <div className="font-mono text-[13px] text-gold mt-1">{top.adj_dscore} D-SCORE</div>
                   </div>
                 )}
                 <ChevronRight className="absolute bottom-5 right-5 text-gold/40 group-hover:text-gold group-hover:translate-x-1 transition-all" size={16} />
@@ -234,7 +234,7 @@ export default function FieldView() {
           >
             <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-gold to-transparent" />
             <div>
-              <div className="font-mono text-[9px] tracking-[0.22em] text-gold mb-2">APPENDIX</div>
+              <div className="font-mono text-[13px] tracking-[0.22em] text-gold mb-2">APPENDIX</div>
               <div className="font-serif text-[36px] leading-none text-cream group-hover:text-gold transition-colors">
                 The full <span className="italic">league</span>, sortable.
               </div>
@@ -256,11 +256,11 @@ function Fact({ label, value, sub, emphasis = false }: {
 }) {
   return (
     <div className="border-l-2 border-gold/30 pl-5">
-      <div className="font-mono text-[9px] tracking-[0.22em] text-muted mb-2">{label}</div>
+      <div className="font-mono text-[13px] tracking-[0.22em] text-muted mb-2">{label}</div>
       <div className={`font-serif text-[26px] leading-[1.05] mb-1 truncate ${emphasis ? 'text-gold' : 'text-cream'}`}>
         {value}
       </div>
-      <div className="font-serif italic text-[12px] text-text/65 leading-snug">{sub}</div>
+      <div className="font-serif italic text-[13px] text-text/65 leading-snug">{sub}</div>
     </div>
   );
 }

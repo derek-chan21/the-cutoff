@@ -17,7 +17,7 @@ export default function About() {
       {/* Back link */}
       <Link
         to="/"
-        className="inline-flex items-center gap-2 font-mono text-[10px] text-gold tracking-[0.18em] hover:-translate-x-1 transition-all mb-10 no-underline"
+        className="inline-flex items-center gap-2 font-mono text-[13px] text-gold tracking-[0.18em] hover:-translate-x-1 transition-all mb-10 no-underline"
       >
         <ArrowLeft size={12} />
         BACK TO THE INDEX
@@ -27,7 +27,7 @@ export default function About() {
       <motion.div
         initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.15, duration: 0.6 }}
-        className="font-mono text-[10px] tracking-[0.3em] text-rust mb-5"
+        className="font-mono text-[13px] tracking-[0.3em] text-rust mb-5"
       >
         EDITORIAL · METHODOLOGY
       </motion.div>
@@ -95,7 +95,7 @@ export default function About() {
           The score reflects that.
         </p>
 
-        <p className="font-mono text-[11px] tracking-[0.18em] text-rust mt-8 mb-3">
+        <p className="font-mono text-[13px] tracking-[0.18em] text-rust mt-8 mb-3">
           THE INPUTS, BY POSITION CATEGORY
         </p>
 
@@ -188,7 +188,7 @@ export default function About() {
         </p>
         <Link
           to="/"
-          className="group inline-flex items-center gap-3 px-6 py-3 rounded-full font-mono text-[11px] tracking-[0.18em] bg-gold text-bg hover:bg-cream transition-colors no-underline"
+          className="group inline-flex items-center gap-3 px-6 py-3 rounded-full font-mono text-[13px] tracking-[0.18em] bg-gold text-bg hover:bg-cream transition-colors no-underline"
         >
           BEGIN READING
           <ChevronRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
@@ -209,7 +209,7 @@ function Section({ heading, children }: { heading: string; children: React.React
       <h2 className="font-serif text-[clamp(28px,3.4vw,40px)] leading-[1.1] tracking-[-0.005em] text-cream mb-5">
         {heading}
       </h2>
-      <div className="font-body text-[16.5px] leading-[1.75] text-text/85 space-y-5 font-light max-w-[680px]">
+      <div className="font-body text-[16.5px] leading-[1.75] text-text/85 space-y-5 max-w-[680px]">
         {children}
       </div>
     </motion.section>
@@ -220,10 +220,10 @@ function Section({ heading, children }: { heading: string; children: React.React
 function Bullet({ group, children }: { group: string; children: React.ReactNode }) {
   return (
     <div className="mt-5 border-l-2 border-gold/25 pl-5">
-      <div className="font-mono text-[10px] tracking-[0.18em] text-gold mb-2 uppercase">
+      <div className="font-mono text-[13px] tracking-[0.18em] text-gold mb-2 uppercase">
         {group}
       </div>
-      <p className="font-body text-[15px] leading-[1.7] text-text/80 font-light">
+      <p className="font-body text-[15px] leading-[1.7] text-text/80">
         {children}
       </p>
     </div>
@@ -235,7 +235,7 @@ function Source({ name, detail }: { name: string; detail: string }) {
   return (
     <div className="mt-4 grid grid-cols-[1fr_2fr] gap-5 items-baseline border-b border-gold/12 pb-3">
       <div className="font-serif text-[18px] text-cream">{name}</div>
-      <div className="font-mono text-[11px] tracking-[0.08em] text-text/65 leading-relaxed">
+      <div className="font-mono text-[13px] tracking-[0.08em] text-text/65 leading-relaxed">
         {detail}
       </div>
     </div>

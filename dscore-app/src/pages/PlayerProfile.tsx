@@ -116,7 +116,7 @@ export default function PlayerProfile() {
           <div className="flex items-start justify-between gap-4 flex-wrap mb-12">
             <Link
               to={`/rankings/${player.position}`}
-              className="inline-flex items-center gap-2 font-mono text-[10px] text-text tracking-[0.18em] glass hover:glow-gold hover:-translate-x-1 transition-all px-4 py-2 rounded-full no-underline"
+              className="inline-flex items-center gap-2 font-mono text-[13px] text-text tracking-[0.18em] glass hover:glow-gold hover:-translate-x-1 transition-all px-4 py-2 rounded-full no-underline"
             >
               <ArrowLeft size={12} />
               BACK
@@ -126,14 +126,14 @@ export default function PlayerProfile() {
               {genres.map((g) => (
                 <span
                   key={g}
-                  className="font-mono text-[9px] tracking-[0.2em] glass px-3 py-1.5 rounded-full text-text/90"
+                  className="font-mono text-[13px] tracking-[0.2em] glass px-3 py-1.5 rounded-full text-text/90"
                 >
                   {g}
                 </span>
               ))}
             </div>
 
-            <div className="font-mono text-[10px] tracking-[0.2em] text-text/80">
+            <div className="font-mono text-[13px] tracking-[0.2em] text-text/80">
               SEASON 2026 · #{player.rank} AT {player.position}
             </div>
           </div>
@@ -205,7 +205,7 @@ export default function PlayerProfile() {
               transition={{ delay: 1, duration: 0.6 }}
               className="max-w-[460px]"
             >
-              <div className="font-mono text-[10px] text-text/60 tracking-[0.22em] mb-2">PLAYER PROFILE</div>
+              <div className="font-mono text-[13px] text-text/60 tracking-[0.22em] mb-2">PLAYER PROFILE</div>
               <p className="font-body text-[13px] leading-relaxed text-text/90 line-clamp-3">
                 {player.description}
               </p>
@@ -217,7 +217,7 @@ export default function PlayerProfile() {
               whileHover={{ scale: 1.05 }}
               href={`#stats`}
               onClick={(e) => { e.preventDefault(); document.getElementById('stats')?.scrollIntoView({ behavior: 'smooth' }); }}
-              className="inline-flex items-center gap-3 px-7 py-4 rounded-full font-mono text-[11px] tracking-[0.2em] glass-strong text-text hover:glow-gold transition-all no-underline"
+              className="inline-flex items-center gap-3 px-7 py-4 rounded-full font-mono text-[13px] tracking-[0.2em] glass-strong text-text hover:glow-gold transition-all no-underline"
               style={{ borderColor: `${team.primary}66` }}
             >
               VIEW BREAKDOWN
@@ -232,10 +232,10 @@ export default function PlayerProfile() {
               {logo && (
                 <img src={logo} alt={team.name} className="w-[80px] h-[80px] object-contain mb-2 ml-auto drop-shadow-[0_4px_16px_rgba(0,0,0,0.6)]" />
               )}
-              <div className="font-mono text-[10px] text-text/70 tracking-[0.12em]">
+              <div className="font-mono text-[13px] text-text/70 tracking-[0.12em]">
                 {team.ballpark}
               </div>
-              <div className="font-mono text-[9px] text-text/50 tracking-wider">
+              <div className="font-mono text-[13px] text-text/50 tracking-wider">
                 {team.city.toUpperCase()}
               </div>
             </motion.div>
@@ -259,7 +259,7 @@ export default function PlayerProfile() {
       <section id="stats" className="relative z-20 bg-bg">
       <div className="max-w-[1100px] mx-auto px-7 py-16">
         {/* Eyebrow */}
-        <div className="font-mono text-[10px] tracking-[0.25em] text-gold mb-4 flex items-center gap-2">
+        <div className="font-mono text-[13px] tracking-[0.25em] text-gold mb-4 flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-gold pulse-dot glow-gold" />
           DEFENSIVE METRICS · POSITION-WEIGHTED
         </div>
@@ -299,19 +299,19 @@ export default function PlayerProfile() {
               <span className="text-text">{POS_NAMES[player.position]?.toUpperCase()}</span>{' '}
               <span className="text-gold">LEADERS</span>
             </h2>
-            <div className="font-mono text-[10px] text-muted tracking-wider">{allAtPos.length} QUALIFIED PLAYERS</div>
+            <div className="font-mono text-[13px] text-muted tracking-wider">{allAtPos.length} QUALIFIED PLAYERS</div>
           </div>
           <div className="glass rounded-2xl overflow-hidden">
             <table className="w-full border-collapse">
               <thead>
                 <tr className="border-b border-white/[0.08]">
-                  <th className="text-left px-4 py-3 font-mono text-[9px] tracking-[0.15em] text-muted font-normal">#</th>
-                  <th className="text-left px-4 py-3 font-mono text-[9px] tracking-[0.15em] text-muted font-normal">Player</th>
-                  <th className="text-left px-4 py-3 font-mono text-[9px] tracking-[0.15em] text-muted font-normal">Team</th>
-                  <th className="text-right px-4 py-3 font-mono text-[9px] tracking-[0.15em] text-muted font-normal">{isC ? 'FRV' : 'OAA'}</th>
-                  <th className="text-right px-4 py-3 font-mono text-[9px] tracking-[0.15em] text-muted font-normal">ARM</th>
-                  <th className="text-right px-4 py-3 font-mono text-[9px] tracking-[0.15em] text-muted font-normal">DRS</th>
-                  <th className="text-right px-4 py-3 font-mono text-[9px] tracking-[0.15em] text-muted font-normal">D-Score</th>
+                  <th className="text-left px-4 py-3 font-mono text-[13px] tracking-[0.15em] text-muted font-normal">#</th>
+                  <th className="text-left px-4 py-3 font-mono text-[13px] tracking-[0.15em] text-muted font-normal">Player</th>
+                  <th className="text-left px-4 py-3 font-mono text-[13px] tracking-[0.15em] text-muted font-normal">Team</th>
+                  <th className="text-right px-4 py-3 font-mono text-[13px] tracking-[0.15em] text-muted font-normal">{isC ? 'FRV' : 'OAA'}</th>
+                  <th className="text-right px-4 py-3 font-mono text-[13px] tracking-[0.15em] text-muted font-normal">ARM</th>
+                  <th className="text-right px-4 py-3 font-mono text-[13px] tracking-[0.15em] text-muted font-normal">DRS</th>
+                  <th className="text-right px-4 py-3 font-mono text-[13px] tracking-[0.15em] text-muted font-normal">D-Score</th>
                 </tr>
               </thead>
               <tbody>
@@ -323,12 +323,12 @@ export default function PlayerProfile() {
                       p.rank === player.rank ? 'bg-gold/[0.08]' : ''
                     }`}
                   >
-                    <td className="px-4 py-3 font-mono text-[11px] text-muted">#{p.rank}</td>
+                    <td className="px-4 py-3 font-mono text-[13px] text-muted">#{p.rank}</td>
                     <td className={`px-4 py-3 text-[13px] ${p.rank === player.rank ? 'text-gold font-medium' : ''}`}>{p.player}</td>
-                    <td className="px-4 py-3 font-mono text-[11px] text-muted">{p.team}</td>
-                    <td className="px-4 py-3 text-right font-mono text-[12px]">{isC ? fmt(p.frv || 0) : (p.oaa >= 0 ? '+' : '') + p.oaa}</td>
-                    <td className="px-4 py-3 text-right font-mono text-[12px] text-muted2">{fmt(p.arm_runs || 0)}</td>
-                    <td className="px-4 py-3 text-right font-mono text-[12px] text-muted2">{p.drs === 0 ? '—' : (p.drs >= 0 ? '+' : '') + p.drs}</td>
+                    <td className="px-4 py-3 font-mono text-[13px] text-muted">{p.team}</td>
+                    <td className="px-4 py-3 text-right font-mono text-[13px]">{isC ? fmt(p.frv || 0) : (p.oaa >= 0 ? '+' : '') + p.oaa}</td>
+                    <td className="px-4 py-3 text-right font-mono text-[13px] text-muted2">{fmt(p.arm_runs || 0)}</td>
+                    <td className="px-4 py-3 text-right font-mono text-[13px] text-muted2">{p.drs === 0 ? '—' : (p.drs >= 0 ? '+' : '') + p.drs}</td>
                     <td className={`px-4 py-3 text-right font-display text-[20px] ${p.rank === player.rank ? 'text-gold text-gold' : ''}`}>
                       {p.adj_dscore}
                     </td>
@@ -367,13 +367,13 @@ function BigStat({ label, value, decimals = 1, sub, tint, icon, primary }: {
       />
       <div className="relative">
         <div className="flex items-center justify-between mb-2">
-          <span className="font-mono text-[10px] tracking-[0.18em] text-muted2">{label}</span>
+          <span className="font-mono text-[13px] tracking-[0.18em] text-muted2">{label}</span>
           {icon && <span className="opacity-70" style={{ color: tint || '#00d4ff' }}>{icon}</span>}
         </div>
         <div className="font-display text-[48px] leading-none" style={{ color: primary ? '#fff' : tint || '#00d4ff' }}>
           <AnimatedCounter value={value} decimals={decimals} prefix={value >= 0 && !label.includes('SCORE') ? '+' : ''} />
         </div>
-        {sub && <div className="font-mono text-[10px] text-muted mt-2 tracking-[0.06em]">{sub}</div>}
+        {sub && <div className="font-mono text-[13px] text-muted mt-2 tracking-[0.06em]">{sub}</div>}
       </div>
     </motion.div>
   );
@@ -403,7 +403,7 @@ function MetricGrid({ player, isC, teamPrimary }: { player: Player; isC: boolean
       initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.2 }}
       variants={{ hidden: {}, show: { transition: { staggerChildren: 0.08 } } }}
     >
-      <div className="font-mono text-[10px] tracking-[0.2em] text-gold uppercase mb-4 flex items-center gap-2">
+      <div className="font-mono text-[13px] tracking-[0.2em] text-gold uppercase mb-4 flex items-center gap-2">
         <Shield size={13} />
         Component Breakdown
       </div>
@@ -418,13 +418,13 @@ function MetricGrid({ player, isC, teamPrimary }: { player: Player; isC: boolean
           >
             <div className="absolute top-0 left-0 right-0 h-[1px]" style={{ background: `linear-gradient(90deg, transparent, ${teamPrimary}, transparent)` }} />
             <div className="flex items-baseline justify-between mb-2">
-              <div className="font-mono text-[10px] tracking-[0.16em] text-muted2 uppercase">{c.label}</div>
-              <div className="font-mono text-[9px] text-gold tracking-wider">{c.wt}%</div>
+              <div className="font-mono text-[13px] tracking-[0.16em] text-muted2 uppercase">{c.label}</div>
+              <div className="font-mono text-[13px] text-gold tracking-wider">{c.wt}%</div>
             </div>
             <div className="font-display text-[40px] leading-none my-2" style={{ color: teamPrimary }}>
               <AnimatedCounter value={c.val} decimals={1} prefix={c.val >= 0 ? '+' : ''} />
             </div>
-            <div className="font-body text-[12px] text-muted2 leading-snug mb-3 font-light">{c.desc}</div>
+            <div className="font-body text-[13px] text-muted2 leading-snug mb-3">{c.desc}</div>
             <div className="h-[3px] bg-white/[0.06] rounded-full overflow-hidden">
               <motion.div
                 initial={{ width: 0 }}

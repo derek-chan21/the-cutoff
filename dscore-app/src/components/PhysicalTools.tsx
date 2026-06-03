@@ -55,7 +55,7 @@ export default function PhysicalTools({ player }: { player: Player }) {
       transition={{ duration: 0.6 }}
       className="mt-12"
     >
-      <div className="font-mono text-[10px] tracking-[0.2em] text-gold uppercase mb-4 flex items-center gap-2">
+      <div className="font-mono text-[13px] tracking-[0.2em] text-gold uppercase mb-4 flex items-center gap-2">
         <Activity size={13} />
         Physical Tools · Statcast
       </div>
@@ -84,26 +84,26 @@ export default function PhysicalTools({ player }: { player: Player }) {
             >
               <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-gold to-transparent opacity-40" />
 
-              <div className="font-mono text-[9px] tracking-[0.18em] text-muted2 mb-3">{t.label}</div>
+              <div className="font-mono text-[13px] tracking-[0.18em] text-muted2 mb-3">{t.label}</div>
 
               <div className="flex items-baseline gap-2 mb-1">
                 <div className="font-display text-[42px] leading-none text-cream">
                   {displayValue}
                 </div>
                 {t.value && t.value > 0 && (
-                  <div className="font-mono text-[12px] text-muted2">{t.unit}</div>
+                  <div className="font-mono text-[13px] text-muted2">{t.unit}</div>
                 )}
               </div>
 
               {t.value && t.value > 0 && (
-                <div className={`font-mono text-[9px] tracking-[0.18em] mb-3 ${
+                <div className={`font-mono text-[13px] tracking-[0.18em] mb-3 ${
                   grade === 'ELITE' ? 'text-gold' : grade === 'PLUS' ? 'text-cream' : 'text-muted'
                 }`}>
                   {grade} · {p}TH PERCENTILE
                 </div>
               )}
 
-              <div className="font-serif italic text-[12px] text-text/65 leading-snug mb-3">
+              <div className="font-serif italic text-[13px] text-text/65 leading-snug mb-3">
                 {t.desc}
               </div>
 

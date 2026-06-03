@@ -6,7 +6,7 @@ export default function Navbar() {
   const isAbout = pathname === '/about';
 
   const linkClass = (active: boolean) =>
-    `relative font-mono text-[11px] tracking-[0.16em] uppercase transition-colors ${
+    `relative font-mono text-[13px] tracking-[0.16em] uppercase transition-colors ${
       active ? 'text-gold' : 'text-muted2 hover:text-text'
     }`;
 
@@ -19,7 +19,7 @@ export default function Navbar() {
             <span className="font-display text-[22px] tracking-[0.1em] text-gold group-hover:text-cream transition-colors">
               THE CUTOFF
             </span>
-            <span className="font-mono text-[9px] text-muted2 tracking-[0.22em] mt-[2px]">
+            <span className="font-mono text-[13px] text-muted2 tracking-[0.22em] mt-[2px]">
               DEFENSIVE ANALYTICS · 2026
             </span>
           </span>
@@ -33,7 +33,7 @@ export default function Navbar() {
             About
             {isAbout && <span className="absolute -bottom-[6px] left-0 right-0 h-[1px] bg-gold" />}
           </Link>
-          <span className="flex items-center gap-1.5 font-mono text-[9px] text-gold tracking-[0.2em] px-2.5 py-[5px] rounded-sm border border-gold/30 bg-gold/[0.05]">
+          <span className="flex items-center gap-1.5 font-mono text-[13px] text-gold tracking-[0.2em] px-2.5 py-[5px] rounded-sm border border-gold/30 bg-gold/[0.05]">
             <span className="w-1.5 h-1.5 rounded-full bg-gold pulse-dot" />
             LIVE
           </span>
