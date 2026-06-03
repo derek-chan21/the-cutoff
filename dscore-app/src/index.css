@@ -33,16 +33,19 @@ body::before {
 .font-mono { font-family: 'JetBrains Mono', monospace; font-variant-ligatures: none; }
 .font-serif { font-family: 'Playfair Display', Georgia, serif; }
 
-/* GLASS — subtle, warm-tinted */
+/* GLASS — warm-tinted, with a DARK fill underneath the blur so text stays
+   readable even when there's a bright/colorful photo behind the card. */
 .glass {
-  background: linear-gradient(135deg, rgba(240,231,210,0.05), rgba(240,231,210,0.015));
+  background: linear-gradient(135deg, rgba(20,17,13,0.72), rgba(20,17,13,0.62)),
+              linear-gradient(135deg, rgba(240,231,210,0.05), rgba(240,231,210,0.015));
   backdrop-filter: blur(20px) saturate(140%);
   -webkit-backdrop-filter: blur(20px) saturate(140%);
   border: 1px solid rgba(240,231,210,0.08);
   box-shadow: 0 8px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(240,231,210,0.05);
 }
 .glass-strong {
-  background: linear-gradient(135deg, rgba(240,231,210,0.09), rgba(240,231,210,0.03));
+  background: linear-gradient(135deg, rgba(20,17,13,0.78), rgba(20,17,13,0.68)),
+              linear-gradient(135deg, rgba(240,231,210,0.09), rgba(240,231,210,0.03));
   backdrop-filter: blur(24px) saturate(160%);
   -webkit-backdrop-filter: blur(24px) saturate(160%);
   border: 1px solid rgba(240,231,210,0.12);

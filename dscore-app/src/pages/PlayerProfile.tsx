@@ -57,8 +57,9 @@ export default function PlayerProfile() {
     >
       {/* ═══════════════════════════════════════════════════════
           POSTER HERO — full-bleed editorial layout
+          overflow-hidden so the parallax photo stays inside the hero
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative w-full" style={{ minHeight: '95vh' }}>
+      <section className="relative w-full overflow-hidden" style={{ minHeight: '95vh' }}>
         {/* Layer 1: stadium photo with parallax */}
         <motion.div
           style={{ y: heroParallax }}
@@ -253,8 +254,10 @@ export default function PlayerProfile() {
 
       {/* ═══════════════════════════════════════════════════════
           STATS SECTION — below the hero
+          Solid dark bg + high z so no hero photo bleeds through
           ═══════════════════════════════════════════════════════ */}
-      <section id="stats" className="relative max-w-[1100px] mx-auto px-7 py-16">
+      <section id="stats" className="relative z-20 bg-bg">
+      <div className="max-w-[1100px] mx-auto px-7 py-16">
         {/* Eyebrow */}
         <div className="font-mono text-[10px] tracking-[0.25em] text-gold mb-4 flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-gold pulse-dot glow-gold" />
@@ -335,6 +338,7 @@ export default function PlayerProfile() {
             </table>
           </div>
         </motion.div>
+      </div>
       </section>
     </motion.div>
   );
